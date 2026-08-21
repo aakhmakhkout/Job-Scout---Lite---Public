@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-body antialiased dark:bg-slate-900 dark:text-slate-100;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  :focus-visible {
+    outline: 2px solid theme('colors.brand.DEFAULT');
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: theme('colors.brand.light');
+    color: white;
+  }
+}
+
+@layer utilities {
+  .ledger-num {
+    @apply font-mono tabular-nums;
+  }
+
+  /*
+   * Native <select> popups don't reliably inherit `bg-transparent` across
+   * browsers — the closed box looks themed, but the open dropdown falls
+   * back to a stark white system default in dark mode, hiding light text.
+   * Setting an explicit background (not transparent) per theme fixes it.
+   */
+  .select-field {
+    @apply bg-white text-ink dark:bg-slate-800 dark:text-slate-100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

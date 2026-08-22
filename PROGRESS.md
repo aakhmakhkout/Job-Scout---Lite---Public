@@ -37,6 +37,84 @@ Trust scoring, scam-keyword flagging, blocklist, saved jobs, application
 tracker (table + kanban), interview reminders. Full feature list lives in
 the original prompt — not repeated here to keep this file short.
 
+## Status: Step 14 (Phase 2) — Admin Import UI: upload, dedupe, review, approve/reject
+
+### What's new
+- **`POST /api/admin/imports`** — upload a JSON array of job listings.
+  Find-or-creates a `sources` row by name (case-insensitive, so
+  re-uploads from the same collector group together), validates every
+  item (`lib/adminImport/validateJobItem.js`), and checks all
+  `apply_url`s against existing `jobs` in one batched query
+  (`lib/adminImport/dedupe.js`) rather than one query per item.
+- **`GET /api/admin/imports`** / **`GET /api/admin/imports/[id]`** —
+  list imports, and fetch one import's full item list for review.
+- **`PATCH /api/admin/imports/[id]/items/[itemId]`** — approve or
+  reject one item. Approving inserts a normalized row into `jobs`
+  (default `trust_score: 50`, explicitly labeled as admin-reviewed, not
+  algorithmically scored — honest about not pretending it went through
+  the real trust-scoring engine). Rejecting just marks the item.
+- **`/admin/imports`** — list of past import batches with status/counts.
+- **`/admin/imports/new`** — upload form (file picker or paste-JSON),
+  with the expected schema documented inline.
+- **`/admin/imports/[id]`** — the actual review screen: each item shows
+  title/company/location/apply_url, a status badge, and Approve/Reject
+  buttons.
+- `/admin` now links to `/admin/imports` instead of being a dead-end
+  placeholder.
+
+### Real bug caught during this step (not a sandbox-only issue)
+`/admin/imports` and `/admin/imports/[id]` read Supabase via the
+service-role client, which — unlike `lib/supabase/server.js`'s
+cookie-aware client used everywhere else — gives Next.js no signal that
+the page needs live data. Without `export const dynamic =
+'force-dynamic'` on both, the build would have **statically generated
+them once at build time and served that frozen snapshot forever in
+production** — a real correctness bug, not just something this
+sandbox's missing service-role key happened to surface. Fixed on both
+pages.
+
+### Honest Phase 2 scope limits, by design
+- **No in-app editing** of a bad item's fields — if `validation_errors`
+  is non-empty, the only action is reject. Fixing bad data means fixing
+  it at the source and re-uploading, not patching it in the UI.
+- **Duplicate-flagged items can only be rejected**, never approved —
+  deciding "is this actually an intentional update to an existing
+  listing" is a real judgment call this phase doesn't attempt to
+  automate.
+- **No merge into the public Jobs/Internships pages yet.** Approved
+  items land in the `jobs` table, correctly shaped to match
+  `cache/jobs.json`, but the public pages still only read from the
+  scraper's cache file — that merge is its own future step (real
+  architecture decision: scraper jobs live in a SQLite-generated cache
+  file, admin jobs live directly in Supabase — needs actual merge logic
+  on the public Jobs/Internships pages, not done here).
+
+### Do this before it'll work
+Re-run `supabase/schema.sql` (safe — adds one new column,
+`import_items.validation_errors`, via a guarded `ALTER TABLE`).
+
+### Verified
+`next build` — 30/30 routes, all new admin/import routes and pages
+compile clean, correctly marked dynamic (not static). Middleware
+unchanged at 85.6kB (import routes are ordinary `/api/admin/*` paths,
+already covered by the existing admin-routing guard from Step 12 — no
+middleware changes needed for this step). This sandbox can't reach your
+real Supabase project, so the actual upload → dedupe → approve flow
+needs a real test: try uploading a small JSON batch (2-3 fake jobs,
+including one with a deliberately invalid `apply_url` and, if you want,
+one whose `apply_url` matches something already in your real `jobs`
+table) and confirm the review screen correctly shows validation errors
+on the bad one, "duplicate" on the matching one, and lets you approve
+the clean one.
+
+### Not started yet
+- Merging admin-approved `jobs` into the public Jobs/Internships pages.
+- Editing an import item's fields before approving (currently
+  reject-and-re-upload only).
+- Everything else already listed in "Additional fixes" above.
+
+---
+
 ## Status: Step 13 — Login rate limiting (admin 3-try, regular user 5-try)
 
 ### What's new
@@ -660,4 +738,12 @@ jobscout-lite/
 ```
 ├─ lib/rateLimit.js
 ├─ app/api/auth/login/route.js   (new — regular user login now proxies through here)
+```
+
+### File inventory additions, Step 14
+```
+├─ lib/adminImport/ (validateJobItem.js, dedupe.js)
+├─ app/admin/imports/ (page.js, new/page.js, [id]/page.js)
+├─ app/api/admin/imports/ (route.js, [id]/route.js, [id]/items/[itemId]/route.js)
+├─ components/admin/ (ImportUploadForm.jsx, ImportReviewClient.jsx)
 ```

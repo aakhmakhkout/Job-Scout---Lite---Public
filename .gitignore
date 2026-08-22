@@ -1,28 +1,40 @@
+# ── Build artifacts & OS junk ────────────────────────────────────────
 node_modules/
 .next/
 out/
+.DS_Store
+*.log
+
+# ── Secrets — never commit, anywhere, ever ───────────────────────────
 .env
 .env.local
-*.log
-.DS_Store
+supabase/admin_seed.sql
+
+# ── Scraper-generated / local data (not source, regenerate anytime) ──
 cache/jobs.json
 scraper/jobs.db
 scraper/venv/
 scraper/__pycache__/
 scraper/sources/__pycache__/
 scraper/logs/*.log
+
+# ── Working docs for you + Claude — never pushed to either repo ──────
+# (build history, architecture notes, env var reference — useful for
+# resuming work with Claude, not meant for git at all)
+PROGRESS.md
 updates.md
 personal.md
-supabase/admin_seed.sql
+.env.local.example
+
+
 scraper/
 supabase/
 lib/adminAuth/
 lib/rateLimit.js
+lib/adminImport/
 middleware.js
 app/api/
 app/admin/
 components/admin/
-next.config.js
-tailwind.config.js
-postcss.config.js
-jsconfig.json
+lib/mockData.js
+components/jobs/JobCard.jsx

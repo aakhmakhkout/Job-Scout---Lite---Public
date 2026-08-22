@@ -37,6 +37,57 @@ Trust scoring, scam-keyword flagging, blocklist, saved jobs, application
 tracker (table + kanban), interview reminders. Full feature list lives in
 the original prompt — not repeated here to keep this file short.
 
+## Status: Step 15 — Dashboard widgets + new Resources tab (structure only, mock data)
+
+### What's new
+- **Dashboard, no longer mostly empty space**: two new widgets below the
+  existing 4 StatCards —
+  - `MarketSnapshotChart` — trust-tier breakdown (Trusted/Good/Review/
+    Suspicious) as a segmented bar + legend.
+  - `TopCompaniesWidget` — ranked list of companies with the most open
+    roles, each with a relative bar.
+  - **Both use hardcoded mock data right now** (`MOCK_MARKET_SNAPSHOT`,
+    `MOCK_TOP_COMPANIES` in `app/dashboard/page.js`), clearly marked as
+    such. Wiring them to real counts computed from `cache/jobs.json`
+    (the same data the existing StatCards already read) is a small,
+    separate follow-up — deliberately not done this step, since this
+    was scoped as "structure only."
+- **New `/resources` tab** — sidebar + mobile nav ("Tools"), gated by
+  middleware like every other logged-in page.
+  - "Resume building" section, actually populated: Overleaf and Google
+    Docs' free template gallery (both real, free tools — factual
+    one-line descriptions, no promotional language), plus a
+    **"Your resume builder" placeholder card** (marked "Coming soon")
+    ready to swap to a real card the moment you give me the link — no
+    structural change needed when that happens, just fill in `url` and
+    drop `comingSoon` in `app/resources/page.js`.
+  - "More on the way" — Interview prep, Salary research, Cover letter
+    guidance shown as dashed placeholder pills, signaling what's coming
+    without inventing content for them now.
+
+### Do this before it'll work
+Nothing — no schema changes this step, purely frontend.
+
+### Verified
+`next build` — 31/31 routes, `/resources` compiles clean and correctly
+dynamic/protected. No Supabase involved in this step at all, so no
+sandbox-network caveat this time — what you see locally is exactly
+what's shipped.
+
+### Not started yet
+- Wiring `MarketSnapshotChart`/`TopCompaniesWidget` to real cache data
+  instead of mock numbers.
+- Your resume builder link (waiting on you).
+- More scraper sources/career pages — explicitly asked for this
+  session, deliberately deferred to its own step since it and this
+  dashboard work wouldn't both fit in one session. Still tracked in
+  "Additional fixes" above.
+- Content for the "More on the way" resource categories (Interview
+  prep, Salary research, Cover letter guidance).
+- Everything else already listed in "Additional fixes" above.
+
+---
+
 ## Status: Step 14 (Phase 2) — Admin Import UI: upload, dedupe, review, approve/reject
 
 ### What's new
@@ -746,4 +797,11 @@ jobscout-lite/
 ├─ app/admin/imports/ (page.js, new/page.js, [id]/page.js)
 ├─ app/api/admin/imports/ (route.js, [id]/route.js, [id]/items/[itemId]/route.js)
 ├─ components/admin/ (ImportUploadForm.jsx, ImportReviewClient.jsx)
+```
+
+### File inventory additions, Step 15
+```
+├─ components/dashboard/ (MarketSnapshotChart.jsx, TopCompaniesWidget.jsx)
+├─ components/resources/ (ResourceCard.jsx)
+├─ app/resources/page.js
 ```

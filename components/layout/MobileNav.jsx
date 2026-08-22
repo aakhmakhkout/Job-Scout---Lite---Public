@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/internships', label: 'Interns' },
   { href: '/applications', label: 'Tracker' },
   { href: '/interviews', label: 'Interviews' },
+  { href: '/resources', label: 'Tools' },
 ];
 
 export default function MobileNav() {

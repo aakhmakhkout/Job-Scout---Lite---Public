@@ -1,7 +1,22 @@
 import AppShell from '@/components/layout/AppShell';
 import StatCard from '@/components/dashboard/StatCard';
+import MarketSnapshotChart from '@/components/dashboard/MarketSnapshotChart';
+import TopCompaniesWidget from '@/components/dashboard/TopCompaniesWidget';
 import { getJobsCache } from '@/lib/jobsCache';
 import { createClient } from '@/lib/supabase/server';
+
+// STEP 15 — mock data for the two new widgets below. Deliberately not
+// computed from the real cache yet (see PROGRESS.md / updates.md for
+// why) — this step is about layout/structure, wiring real numbers in
+// is a small, separate follow-up.
+const MOCK_MARKET_SNAPSHOT = { trusted: 38, good: 96, review: 124, suspicious: 46 };
+const MOCK_TOP_COMPANIES = [
+  { name: 'Stripe', openRoles: 14 },
+  { name: 'Coinbase', openRoles: 11 },
+  { name: 'Airbnb', openRoles: 9 },
+  { name: 'Razorpay', openRoles: 7 },
+  { name: 'Postman', openRoles: 5 },
+];
 
 function formatSyncTime(iso) {
   if (!iso) return 'never — run the scraper';
@@ -76,6 +91,11 @@ export default async function DashboardPage() {
           </p>
         </div>
       )}
+
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <MarketSnapshotChart data={MOCK_MARKET_SNAPSHOT} />
+        <TopCompaniesWidget companies={MOCK_TOP_COMPANIES} />
+      </div>
     </AppShell>
   );
 }

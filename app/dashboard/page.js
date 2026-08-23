@@ -2,6 +2,8 @@ import AppShell from '@/components/layout/AppShell';
 import StatCard from '@/components/dashboard/StatCard';
 import MarketSnapshotChart from '@/components/dashboard/MarketSnapshotChart';
 import TopCompaniesWidget from '@/components/dashboard/TopCompaniesWidget';
+import ResumeToolsBox from '@/components/dashboard/ResumeToolsBox';
+import ComingSoonBox from '@/components/dashboard/ComingSoonBox';
 import { getJobsCache } from '@/lib/jobsCache';
 import { createClient } from '@/lib/supabase/server';
 
@@ -95,6 +97,14 @@ export default async function DashboardPage() {
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <MarketSnapshotChart data={MOCK_MARKET_SNAPSHOT} />
         <TopCompaniesWidget companies={MOCK_TOP_COMPANIES} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ResumeToolsBox />
+        <ComingSoonBox
+          title="Interview prep"
+          description="Question banks, mock-interview tips, and company-specific prep — planned, not built yet."
+        />
       </div>
     </AppShell>
   );

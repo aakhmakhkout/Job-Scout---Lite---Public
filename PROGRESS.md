@@ -37,6 +37,54 @@ Trust scoring, scam-keyword flagging, blocklist, saved jobs, application
 tracker (table + kanban), interview reminders. Full feature list lives in
 the original prompt — not repeated here to keep this file short.
 
+## Status: Step 16 — Resources folded into Dashboard (not a separate tab), real resume builder link, new about-me footer
+
+### What changed from Step 15
+You asked for Resources to live *inside* the Dashboard as more boxes,
+not as its own sidebar tab — this step reverses that part of Step 15
+and rebuilds it in place. `/resources` (route, nav entries, middleware
+guard) is fully removed; `components/resources/` is gone.
+
+### What's new
+- **Dashboard now has two more boxes**, below Market Snapshot / Top
+  Companies:
+  - `ResumeToolsBox` — real content now, not mock: **your own resume
+    builder** (https://resume-builder-ten-blush.vercel.app/), Overleaf,
+    and Google Docs' free template gallery. No more "coming soon"
+    placeholder for your builder — you gave me the link, so it's a real
+    working link now.
+  - `ComingSoonBox` — a small reusable component (title + description),
+    used for "Interview prep" right now. Built generically on purpose
+    so Salary research / Cover letter guidance can reuse it later
+    without a new component each time.
+- **New about-me footer**, replacing the plain centered copyright line
+  everywhere it appeared (every logged-in page via `AppShell`, and
+  every auth page via `AuthShell`): your name, a GitHub icon linking to
+  `github.com/aakhmakhkout`, a LinkedIn icon linking to
+  `linkedin.com/in/xymoexyom`. Right-aligned in the footer bar on
+  logged-in pages, centered on auth pages (matches their centered
+  layout) — **deliberately not `position: fixed`**, since `AppShell`
+  already pins `MobileNav` to the bottom on mobile, and a second fixed
+  element in the same corner risked overlapping it.
+
+### Do this before it'll work
+Nothing — no schema changes, purely frontend, same as Step 15.
+
+### Verified
+`next build` — 30/30 routes (down from 31, `/resources` correctly
+removed). No Supabase involved, so no sandbox-network caveat.
+
+### Not started yet
+- Wiring `MarketSnapshotChart`/`TopCompaniesWidget` to real cache data
+  instead of mock numbers (unchanged from Step 15).
+- Content for remaining "coming soon" categories (Interview prep,
+  Salary research, Cover letter guidance).
+- More scraper sources/career pages — still queued, still tracked in
+  "Additional fixes" above.
+- Everything else already listed in "Additional fixes" above.
+
+---
+
 ## Status: Step 15 — Dashboard widgets + new Resources tab (structure only, mock data)
 
 ### What's new
@@ -802,6 +850,12 @@ jobscout-lite/
 ### File inventory additions, Step 15
 ```
 ├─ components/dashboard/ (MarketSnapshotChart.jsx, TopCompaniesWidget.jsx)
-├─ components/resources/ (ResourceCard.jsx)
-├─ app/resources/page.js
+├─ components/resources/ (ResourceCard.jsx)   — REMOVED in Step 16
+├─ app/resources/page.js                       — REMOVED in Step 16
+```
+
+### File inventory additions, Step 16
+```
+├─ components/dashboard/ (ResumeToolsBox.jsx, ComingSoonBox.jsx — new)
+├─ components/layout/Footer.jsx                — rewritten, not new
 ```

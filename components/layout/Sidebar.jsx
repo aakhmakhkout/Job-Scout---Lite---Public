@@ -10,7 +10,6 @@ const NAV_ITEMS = [
   { href: '/internships', label: 'Internships' },
   { href: '/applications', label: 'Applications' },
   { href: '/interviews', label: 'Interviews' },
-  { href: '/resources', label: 'Resources' },
 ];
 
 export default function Sidebar({ userEmail }) {

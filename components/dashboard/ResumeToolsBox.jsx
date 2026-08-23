@@ -1,7 +1,8 @@
 const TOOLS = [
   {
-    name: 'Your resume builder',
-    description: 'A free resume builder, built and maintained independently.',
+    name: 'Resume Builder by Noumaan',
+    description:
+      'A free resume builder with high customization options and an ATS-friendly layout, built and maintained independently.',
     url: 'https://resume-builder-ten-blush.vercel.app/',
   },
   {

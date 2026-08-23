@@ -34,7 +34,7 @@ export default function Footer({ align = 'end' }) {
       }`}
     >
       <div className="flex items-center gap-3 text-xs text-ink-muted dark:text-slate-500">
-        <span>Noumaan Nabi</span>
+        <span>Copyright © 2026 Noumaan Nabi</span>
         <a
           href="https://www.github.com/aakhmakhkout"
           target="_blank"

@@ -1,9 +1,8 @@
-// MOCK DATA STRUCTURE ONLY — the numbers passed in from app/dashboard/page.js
-// are hardcoded placeholders for this step. Wiring this to a real
-// tier-by-tier count computed from cache/jobs.json (the same data the
-// existing StatCards already read) is a small, contained follow-up —
-// deliberately not done here so this step stays about structure/layout,
-// per what was asked for.
+// Segmented bar showing how the current cache breaks down by trust
+// tier, computed from real data via lib/dashboardStats.js's
+// computeMarketSnapshot() — wired to real data as of Step 17 (was mock
+// in Steps 15/16). Tier boundaries match lib/mockData.js's
+// trustBadgeLabel/Color so this agrees with every job card's own badge.
 
 const TIERS = [
   { key: 'trusted', label: 'Trusted', color: 'bg-trusted' },

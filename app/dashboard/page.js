@@ -5,20 +5,8 @@ import TopCompaniesWidget from '@/components/dashboard/TopCompaniesWidget';
 import ResumeToolsBox from '@/components/dashboard/ResumeToolsBox';
 import ComingSoonBox from '@/components/dashboard/ComingSoonBox';
 import { getJobsCache } from '@/lib/jobsCache';
+import { computeMarketSnapshot, computeTopCompanies } from '@/lib/dashboardStats';
 import { createClient } from '@/lib/supabase/server';
-
-// STEP 15 — mock data for the two new widgets below. Deliberately not
-// computed from the real cache yet (see PROGRESS.md / updates.md for
-// why) — this step is about layout/structure, wiring real numbers in
-// is a small, separate follow-up.
-const MOCK_MARKET_SNAPSHOT = { trusted: 38, good: 96, review: 124, suspicious: 46 };
-const MOCK_TOP_COMPANIES = [
-  { name: 'Stripe', openRoles: 14 },
-  { name: 'Coinbase', openRoles: 11 },
-  { name: 'Airbnb', openRoles: 9 },
-  { name: 'Razorpay', openRoles: 7 },
-  { name: 'Postman', openRoles: 5 },
-];
 
 function formatSyncTime(iso) {
   if (!iso) return 'never — run the scraper';
@@ -68,6 +56,8 @@ export default async function DashboardPage() {
     return hoursOld <= 24;
   }).length;
   const trustedJobsCount = jobs.filter((j) => j.trust_score >= 80).length;
+  const marketSnapshot = computeMarketSnapshot(jobs);
+  const topCompanies = computeTopCompanies(jobs);
 
   return (
     <AppShell title="Dashboard" subtitle={`Last scraper sync: ${formatSyncTime(cache.generated_at)}`}>
@@ -95,8 +85,8 @@ export default async function DashboardPage() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <MarketSnapshotChart data={MOCK_MARKET_SNAPSHOT} />
-        <TopCompaniesWidget companies={MOCK_TOP_COMPANIES} />
+        <MarketSnapshotChart data={marketSnapshot} />
+        <TopCompaniesWidget companies={topCompanies} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">

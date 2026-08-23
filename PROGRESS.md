@@ -37,6 +37,49 @@ Trust scoring, scam-keyword flagging, blocklist, saved jobs, application
 tracker (table + kanban), interview reminders. Full feature list lives in
 the original prompt — not repeated here to keep this file short.
 
+## Status: Step 17 — Dashboard widgets wired to real data, footer/resume-box wording
+
+### What's new
+- **`MarketSnapshotChart` and `TopCompaniesWidget` now show real
+  numbers**, not Step 15/16's mock data. New `lib/dashboardStats.js` —
+  `computeMarketSnapshot(jobs)` and `computeTopCompanies(jobs, limit)`,
+  both pure functions computed from the same `cache/jobs.json` the
+  existing StatCards already read. Trust-tier boundaries (80/60/40)
+  intentionally match `lib/mockData.js`'s `trustBadgeLabel`/`Color`, so
+  the snapshot chart always agrees with what each individual job card's
+  own badge says — no risk of the dashboard summary disagreeing with
+  the detail view.
+- `TopCompaniesWidget` gained a small empty state ("No jobs in the
+  cache yet — run the scraper...") for when `cache/jobs.json` is empty,
+  instead of silently rendering a blank box.
+- **Footer**: "Noumaan Nabi" → "Copyright © 2026 Noumaan Nabi", still
+  followed by the GitHub/LinkedIn icons.
+- **Resume box**: "Your resume builder" → "Resume Builder by Noumaan",
+  with a real description ("free resume builder with high customization
+  options and an ATS-friendly layout").
+
+### Do this before it'll work
+Nothing new — no schema changes. If your `cache/jobs.json` is still the
+placeholder/empty, run `python scraper/main.py` first or the two
+widgets will correctly show 0s / the empty state rather than anything
+wrong.
+
+### Verified
+`next build` — 30/30 routes, clean. Also sanity-checked
+`computeMarketSnapshot`/`computeTopCompanies` directly with a small
+synthetic dataset (5 jobs across different trust scores and companies)
+before trusting them in the full build — tier counts and company
+ranking both came out correct.
+
+### Not started yet
+- More scraper sources/career pages — still queued, still tracked in
+  "Additional fixes" above.
+- Content for remaining "coming soon" categories (Interview prep,
+  Salary research, Cover letter guidance).
+- Everything else already listed in "Additional fixes" above.
+
+---
+
 ## Status: Step 16 — Resources folded into Dashboard (not a separate tab), real resume builder link, new about-me footer
 
 ### What changed from Step 15
@@ -858,4 +901,9 @@ jobscout-lite/
 ```
 ├─ components/dashboard/ (ResumeToolsBox.jsx, ComingSoonBox.jsx — new)
 ├─ components/layout/Footer.jsx                — rewritten, not new
+```
+
+### File inventory additions, Step 17
+```
+├─ lib/dashboardStats.js  (computeMarketSnapshot, computeTopCompanies)
 ```

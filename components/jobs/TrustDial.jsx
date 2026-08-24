@@ -2,18 +2,22 @@ import { trustBadgeLabel, trustBadgeColor } from '@/lib/mockData';
 
 const COLOR_MAP = {
   trusted: { ring: '#2E8B57', text: 'text-trusted' },
-  good: { ring: '#4C8B2E', text: 'text-good' },
-  review: { ring: '#C79A2B', text: 'text-review' },
+  unverified: { ring: '#C79A2B', text: 'text-unverified' },
   suspicious: { ring: '#C7362B', text: 'text-suspicious' },
 };
 
 // A small radial gauge — the needle/fill reads at a glance like an
 // inspection-stamp dial, standing in for a flat "80%" badge. This is the
 // one recurring signature element across the whole app.
-export default function TrustDial({ score, size = 56 }) {
+//
+// Accepts the whole `job` (not just a raw score) as of Step 18, so it
+// can read job.trust_tier when present — see lib/mockData.js for why
+// that's preferred over re-deriving a tier from score alone.
+export default function TrustDial({ job, size = 56 }) {
+  const score = job?.trust_score ?? 0;
   const clamped = Math.max(0, Math.min(100, score));
-  const label = trustBadgeLabel(clamped);
-  const colorKey = trustBadgeColor(clamped);
+  const label = trustBadgeLabel(job);
+  const colorKey = trustBadgeColor(job);
   const { ring, text } = COLOR_MAP[colorKey];
 
   const radius = (size - 8) / 2;

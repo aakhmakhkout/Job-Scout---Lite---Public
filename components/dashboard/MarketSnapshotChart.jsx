@@ -6,8 +6,7 @@
 
 const TIERS = [
   { key: 'trusted', label: 'Trusted', color: 'bg-trusted' },
-  { key: 'good', label: 'Good', color: 'bg-good' },
-  { key: 'review', label: 'Review', color: 'bg-review' },
+  { key: 'unverified', label: 'Unverified', color: 'bg-unverified' },
   { key: 'suspicious', label: 'Suspicious', color: 'bg-suspicious' },
 ];
 

@@ -119,7 +119,7 @@ export default function JobCard({
             <span className="ledger-num">{timeAgo(job.posted_at)}</span>
           </div>
         </div>
-        <TrustDial score={job.trust_score} />
+        <TrustDial job={job} />
       </div>
 
       <div className="mt-1 flex items-center gap-3">

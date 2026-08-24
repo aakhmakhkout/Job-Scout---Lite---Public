@@ -23,6 +23,13 @@ about this project, along with the current project zip, and say
    in-office.
 5. **Underrated job sites and social media** as additional scraper
    sources.
+6. **Admin-managed Resources/Interview-prep content** — an admin page
+   feature to add/remove/update the Dashboard's Resources categories
+   (Resume builders, Useful websites, Useful tools) and Interview prep
+   content, instead of the hardcoded `lib/resourceCategories.js` from
+   Step 18. That file's `{ key, title, description, items }` shape was
+   deliberately chosen to make this a data-source swap (reading from a
+   new Supabase table) rather than a component rewrite when it's built.
 
 ---
 
@@ -36,6 +43,106 @@ targets ~100 users on Vercel Free + Supabase Free + Oracle Cloud Free VPS.
 Trust scoring, scam-keyword flagging, blocklist, saved jobs, application
 tracker (table + kanban), interview reminders. Full feature list lives in
 the original prompt — not repeated here to keep this file short.
+
+## Status: Step 18 — Trust scoring fix (3-tier system) + Resources restructured into sub-categories
+
+### The problem this fixes
+You flagged real data: 204 of 357 jobs (57%) showing "Suspicious,"
+despite the top hiring companies in that same cache being Stripe,
+Airbnb, Canonical, Coinbase — obviously real companies. Root cause:
+the old 4-tier system labeled anything under 40 "Suspicious," but most
+scraped jobs (from RemoteOK/WWR/Remotive/Jobicy, whose `apply_url`
+points at their own page, not the company's) can never earn the
+biggest positive signals no matter how real the listing is — so they
+score near 0 and got mislabeled as if something was actively wrong,
+when really nothing was verifiable either way.
+
+### What changed
+- **New 3-tier system**: Trusted (score ≥70), Unverified (50-69),
+  Suspicious (<50). But the real fix isn't just new thresholds — a job
+  under 50 only lands in **Suspicious** if an actual negative signal
+  fired (Gmail/Yahoo recruiter, confirmed-missing company site,
+  registration/training fee mention, or a scam-keyword match).
+  Otherwise it's **Unverified**, a meaningfully less alarming claim
+  than "Suspicious." This is the "extra salt" fix discussed last
+  session, applied.
+- `scraper/trust_scoring.py` — `compute_trust_score()` now also returns
+  `has_negative_signal`; new `compute_trust_tier(score,
+  has_negative_signal)` implements the logic above. Full reasoning is
+  in the module's docstring.
+- `scraper/main.py` — combines `has_negative_signal` with the existing
+  keyword-based `is_suspicious()` check (ORed together — either one
+  alone is real evidence) to compute `job["trust_tier"]`, now stored
+  alongside `trust_score`/`trust_reasons`.
+- `scraper/db.py` — new `trust_tier` column (guarded migration for
+  existing `jobs.db` files, defaults to `'Unverified'` until the next
+  scraper run recomputes it for real).
+- `supabase/schema.sql` — same `trust_tier` column added to the `jobs`
+  table (admin-approved jobs now explicitly set `trust_tier:
+  'Unverified'` at insert time, rather than relying on a fallback).
+- **Frontend**: `lib/mockData.js`'s `trustBadgeLabel`/`trustBadgeColor`
+  now prefer a job's own `trust_tier` field when present (computed with
+  more information than the frontend has), falling back to score-only
+  thresholds otherwise. `TrustDial` now takes the whole `job` object
+  instead of just `score`, so it can use this. `MarketSnapshotChart`
+  and `lib/dashboardStats.js`'s `computeMarketSnapshot` both updated to
+  3 buckets. Added a new `unverified` Tailwind color token — same amber
+  as the existing `review` token, but a separate name, since `review`
+  still means something unrelated elsewhere (admin import status,
+  application status badges) and had to stay untouched.
+- **Bug also fixed while in here**: the Dashboard's "Trusted jobs"
+  StatCard was still using the old `>= 80` threshold, which would have
+  silently disagreed with the Market Snapshot chart's own "Trusted"
+  count (now `>= 70`). Both now read from the same computed
+  `marketSnapshot.trusted` value — impossible for them to drift apart.
+
+### Also this step — Resources split into sub-categories
+- New `lib/resourceCategories.js` — `RESOURCE_CATEGORIES` array, shaped
+  as `{ key, title, description, items }`. Deliberately shaped this way
+  so a future admin-managed version (reading from a new Supabase table
+  instead of this file, per what you asked for — an admin page section
+  to add/remove/update these) is a data-source swap, not a component
+  rewrite.
+- New `ResourceCategoryBox` — generic, renders a populated item list OR
+  falls back to the existing `ComingSoonBox` when a category has no
+  items yet (reused, not duplicated).
+- Dashboard's "Resources" heading now shows **3 boxes**: Resume
+  builders (populated, same real content as before), Useful websites
+  (empty/coming-soon — structure exists, no fake links invented),
+  Useful tools (same). `ResumeToolsBox.jsx` deleted, replaced by this
+  generic structure.
+- "Interview prep" stays a separate section below Resources, unchanged
+  — per your phrasing distinguishing "resources section" from
+  "interview prep section" as two separately admin-manageable areas.
+
+### Do this before it'll work
+1. Re-run `supabase/schema.sql` (adds `jobs.trust_tier`, safe).
+2. Re-run the scraper (`python scraper/main.py`) so existing jobs get a
+   real computed `trust_tier` instead of the migration's `'Unverified'`
+   default — until you do, every existing job in your SQLite DB will
+   show as Unverified regardless of its actual score, since the
+   migration can't retroactively know whether a negative signal fired
+   without re-running the scoring logic.
+
+### Verified
+Tested `compute_trust_score`/`compute_trust_tier` directly against 4
+scenarios before trusting them in the app: a real job with zero
+verifiable data (the exact false-positive case from your screenshot —
+now correctly Unverified, not Suspicious), an actual scam with a Gmail
+recruiter + registration fee (correctly still Suspicious), a
+Greenhouse job with no extras (correctly Unverified), and a fully
+clean official-domain job (correctly scores high). `next build` —
+30/30 routes, clean.
+
+### Not started yet
+- The admin-page feature to add/remove/update Resources and Interview
+  prep content — this step only built the structure it'll plug into.
+- Content for "Useful websites," "Useful tools," and "Interview prep."
+- More scraper sources/career pages — still queued, still tracked in
+  "Additional fixes" above.
+- Everything else already listed in "Additional fixes" above.
+
+---
 
 ## Status: Step 17 — Dashboard widgets wired to real data, footer/resume-box wording
 
@@ -906,4 +1013,11 @@ jobscout-lite/
 ### File inventory additions, Step 17
 ```
 ├─ lib/dashboardStats.js  (computeMarketSnapshot, computeTopCompanies)
+```
+
+### File inventory additions, Step 18
+```
+├─ lib/resourceCategories.js
+├─ components/dashboard/ResourceCategoryBox.jsx
+├─ components/dashboard/ResumeToolsBox.jsx     — REMOVED, replaced by ResourceCategoryBox
 ```

@@ -2,10 +2,11 @@ import AppShell from '@/components/layout/AppShell';
 import StatCard from '@/components/dashboard/StatCard';
 import MarketSnapshotChart from '@/components/dashboard/MarketSnapshotChart';
 import TopCompaniesWidget from '@/components/dashboard/TopCompaniesWidget';
-import ResumeToolsBox from '@/components/dashboard/ResumeToolsBox';
+import ResourceCategoryBox from '@/components/dashboard/ResourceCategoryBox';
 import ComingSoonBox from '@/components/dashboard/ComingSoonBox';
 import { getJobsCache } from '@/lib/jobsCache';
 import { computeMarketSnapshot, computeTopCompanies } from '@/lib/dashboardStats';
+import { RESOURCE_CATEGORIES } from '@/lib/resourceCategories';
 import { createClient } from '@/lib/supabase/server';
 
 function formatSyncTime(iso) {
@@ -55,7 +56,6 @@ export default async function DashboardPage() {
     const hoursOld = (Date.now() - new Date(j.posted_at).getTime()) / 3_600_000;
     return hoursOld <= 24;
   }).length;
-  const trustedJobsCount = jobs.filter((j) => j.trust_score >= 80).length;
   const marketSnapshot = computeMarketSnapshot(jobs);
   const topCompanies = computeTopCompanies(jobs);
 
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
     <AppShell title="Dashboard" subtitle={`Last scraper sync: ${formatSyncTime(cache.generated_at)}`}>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="New jobs today" value={newJobsToday} />
-        <StatCard label="Trusted jobs" value={trustedJobsCount} hint="Score 80+" />
+        <StatCard label="Trusted jobs" value={marketSnapshot.trusted} hint="Score 70+" />
         <StatCard label="Applied" value={appliedCount ?? '—'} />
         <StatCard label="Upcoming interviews" value={interviewCount ?? '—'} />
       </div>
@@ -89,8 +89,16 @@ export default async function DashboardPage() {
         <TopCompaniesWidget companies={topCompanies} />
       </div>
 
+      <div className="mt-4">
+        <h2 className="text-sm font-semibold text-ink-soft dark:text-slate-300">Resources</h2>
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {RESOURCE_CATEGORIES.map((category) => (
+            <ResourceCategoryBox key={category.key} {...category} />
+          ))}
+        </div>
+      </div>
+
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ResumeToolsBox />
         <ComingSoonBox
           title="Interview prep"
           description="Question banks, mock-interview tips, and company-specific prep — planned, not built yet."

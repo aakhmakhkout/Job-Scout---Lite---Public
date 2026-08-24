@@ -39,6 +39,13 @@ module.exports = {
         good: '#4C8B2E',
         review: '#C79A2B',
         suspicious: '#C7362B',
+        // Added for the 3-tier trust system (Step 18) — same amber as
+        // "review" deliberately (same "needs a closer look, not
+        // confirmed either way" visual meaning), but a distinct token
+        // so trust-tier components aren't coupled to "review", which
+        // still means something unrelated elsewhere (admin import
+        // status, application status badges, etc.) and must not change.
+        unverified: '#C79A2B',
       },
       fontFamily: {
         display: ['var(--font-display)', 'ui-sans-serif', 'system-ui'],

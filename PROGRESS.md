@@ -44,6 +44,54 @@ Trust scoring, scam-keyword flagging, blocklist, saved jobs, application
 tracker (table + kanban), interview reminders. Full feature list lives in
 the original prompt — not repeated here to keep this file short.
 
+## Status: Step 19 — Two more scraper sources (Arbeitnow, Himalayas) — real foreign/international coverage
+
+### What's new
+- **Arbeitnow** (`scraper/sources/arbeitnow.py`) — official public API
+  (`arbeitnow.com/api/job-board-api`), free, no auth. Strong Europe/DACH
+  coverage (Germany, Austria, Switzerland) plus other English-speaking
+  EU roles — genuine foreign-market coverage, not another US-remote
+  feed. Verified live via a direct fetch before writing any code.
+- **Himalayas** (`scraper/sources/himalayas.py`) — official public API
+  (`himalayas.app/jobs/api`), free, no auth, worldwide remote-verified
+  listings (~100K+ jobs from 25K+ companies). Also verified live before
+  writing code. Genuinely useful bonus: many listings include real
+  structured salary data, which now feeds into the existing salary
+  trust-score bonus via a small injected "Salary: ..." line in the
+  summary — more jobs can honestly earn that point now, not fewer.
+- Both added to `scraper/main.py`'s `SOURCES` list and to
+  `trust_scoring.py`'s `JOB_BOARD_DOMAINS` (their apply URLs point to
+  their own hosted pages, not the company's — same treatment every
+  other aggregator source here already gets, avoiding the exact
+  false-domain-bonus bug fixed back in Update 11).
+
+### Do this before it'll work
+Re-run `python scraper/main.py` — no schema/env changes this step,
+purely two new source files.
+
+### Verified
+This sandbox's network allowlist doesn't cover either API directly, so
+rather than skip verification, both APIs were fetched live via web
+search/fetch tools first to confirm they're real and currently working,
+and to capture their actual response shapes. Both parsers were then
+unit-tested against fixture data built from those real captured
+responses (not guessed shapes) — confirmed correct field extraction,
+HTML cleaning, Unix-timestamp-to-ISO8601 conversion, and — critically —
+ran the parsed output through the real `compute_trust_score`/
+`compute_trust_tier` pipeline to confirm neither source falsely earns
+the domain bonus and that Himalayas' salary injection actually triggers
+the salary bonus. All correct. You should still run the scraper for
+real once to confirm live network behavior, same caveat as every
+source added this way before.
+
+### Not started yet
+- India-specific company additions (more Greenhouse/Lever boards) —
+  this step's scope was two new aggregator platforms; company-list
+  expansion stays a separate, quick addition for later.
+- Everything else already listed in "Additional fixes" above.
+
+---
+
 ## Status: Step 18 — Trust scoring fix (3-tier system) + Resources restructured into sub-categories
 
 ### The problem this fixes
@@ -1020,4 +1068,10 @@ jobscout-lite/
 ├─ lib/resourceCategories.js
 ├─ components/dashboard/ResourceCategoryBox.jsx
 ├─ components/dashboard/ResumeToolsBox.jsx     — REMOVED, replaced by ResourceCategoryBox
+```
+
+### File inventory additions, Step 19
+```
+├─ scraper/sources/arbeitnow.py
+├─ scraper/sources/himalayas.py
 ```

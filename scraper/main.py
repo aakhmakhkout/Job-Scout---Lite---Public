@@ -21,7 +21,7 @@ from db import init_db, get_connection, upsert_job, purge_old_jobs, fetch_recent
 from trust_scoring import compute_trust_score, compute_trust_tier, is_suspicious
 from job_classify import classify_job_type
 from cache_writer import write_cache
-from sources import remoteok, weworkremotely, greenhouse, lever, wellfound, remotive, jobicy
+from sources import remoteok, weworkremotely, greenhouse, lever, wellfound, remotive, jobicy, arbeitnow, himalayas
 
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
@@ -40,6 +40,8 @@ SOURCES = [
     ("Wellfound", wellfound.fetch_jobs),
     ("Remotive", remotive.fetch_jobs),
     ("Jobicy", jobicy.fetch_jobs),
+    ("Arbeitnow", arbeitnow.fetch_jobs),
+    ("Himalayas", himalayas.fetch_jobs),
 ]
 
 

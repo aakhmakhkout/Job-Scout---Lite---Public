@@ -81,6 +81,8 @@ JOB_BOARD_DOMAINS = (
     "glassdoor.com",
     "remotive.com",
     "jobicy.com",
+    "arbeitnow.com",  # Step 19 — apply_url points to Arbeitnow's own page, not the company's
+    "himalayas.app",  # Step 19 — same; applicationLink points to Himalayas' own page
 )
 
 ATS_DOMAINS = ("greenhouse.io", "lever.co")

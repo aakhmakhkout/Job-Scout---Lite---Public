@@ -1,3 +1,5 @@
+import Footer from '@/components/layout/Footer';
+
 export default function AuthShell({ title, subtitle, children }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-paper px-4 dark:bg-slate-900">
@@ -18,9 +20,9 @@ export default function AuthShell({ title, subtitle, children }) {
         </div>
       </div>
 
-      <p className="mt-8 text-center text-xs text-ink-muted dark:text-slate-500">
-        Copyright © 2026 Noumaan Nabi. All rights reserved.
-      </p>
+      <div className="mt-8 w-full max-w-sm">
+        <Footer align="center" />
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 // computeMarketSnapshot() — wired to real data as of Step 17 (was mock
 // in Steps 15/16). Tier boundaries match lib/mockData.js's
 // trustBadgeLabel/Color so this agrees with every job card's own badge.
+import { ShieldCheck } from 'lucide-react';
 
 const TIERS = [
   { key: 'trusted', label: 'Trusted', color: 'bg-trusted' },
@@ -15,9 +16,14 @@ export default function MarketSnapshotChart({ data }) {
 
   return (
     <div className="rounded-card border border-ink/10 bg-white p-5 shadow-card dark:border-white/10 dark:bg-slate-800">
-      <h2 className="text-sm font-semibold">Market snapshot</h2>
-      <p className="mt-1 text-xs text-ink-muted dark:text-slate-400">
-        How today's {total} cached listings break down by trust tier.
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
+          <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2.25} />
+        </span>
+        <h2 className="text-sm font-semibold">Market snapshot</h2>
+      </div>
+      <p className="mt-1 pl-9 text-xs text-ink-muted dark:text-slate-400">
+        How today's <span className="ledger-num">{total}</span> cached listings break down by trust tier.
       </p>
 
       <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-ink/5 dark:bg-white/5">
@@ -35,7 +41,7 @@ export default function MarketSnapshotChart({ data }) {
         })}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-3 gap-2">
         {TIERS.map((tier) => (
           <div key={tier.key} className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tier.color}`} />

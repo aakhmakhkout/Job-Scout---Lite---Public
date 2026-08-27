@@ -33,6 +33,20 @@
   .select-field {
     @apply bg-white text-ink dark:bg-slate-800 dark:text-slate-100;
   }
+
+  /*
+   * Used for the Resources cards' capped item lists (ResourceCategoryBox)
+   * — content still scrolls normally with the mouse/touch/keyboard, the
+   * native scrollbar track just isn't drawn, in favor of the fade +
+   * arrow affordance rendered alongside it.
+   */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

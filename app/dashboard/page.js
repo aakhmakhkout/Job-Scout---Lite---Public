@@ -1,3 +1,4 @@
+import { Zap, ShieldCheck, Send, CalendarClock } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import StatCard from '@/components/dashboard/StatCard';
 import MarketSnapshotChart from '@/components/dashboard/MarketSnapshotChart';
@@ -62,10 +63,21 @@ export default async function DashboardPage() {
   return (
     <AppShell title="Dashboard" subtitle={`Last scraper sync: ${formatSyncTime(cache.generated_at)}`}>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="New jobs today" value={newJobsToday} />
-        <StatCard label="Trusted jobs" value={marketSnapshot.trusted} hint="Score 70+" />
-        <StatCard label="Applied" value={appliedCount ?? '—'} />
-        <StatCard label="Upcoming interviews" value={interviewCount ?? '—'} />
+        <StatCard label="New jobs today" value={newJobsToday} icon={Zap} accent="brand" />
+        <StatCard
+          label="Trusted jobs"
+          value={marketSnapshot.trusted}
+          hint="Score 70+"
+          icon={ShieldCheck}
+          accent="trusted"
+        />
+        <StatCard label="Applied" value={appliedCount ?? '—'} icon={Send} accent="brand" />
+        <StatCard
+          label="Upcoming interviews"
+          value={interviewCount ?? '—'}
+          icon={CalendarClock}
+          accent="rust"
+        />
       </div>
 
       {(appliedCount === null || interviewCount === null) && (
@@ -84,25 +96,35 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <MarketSnapshotChart data={marketSnapshot} />
-        <TopCompaniesWidget companies={topCompanies} />
+      <div className="mt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
+          Market intelligence
+        </h2>
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <MarketSnapshotChart data={marketSnapshot} />
+          <TopCompaniesWidget companies={topCompanies} />
+        </div>
       </div>
 
-      <div className="mt-4">
-        <h2 className="text-sm font-semibold text-ink-soft dark:text-slate-300">Resources</h2>
+      <div className="mt-6">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
+          Resources &amp; prep
+        </h2>
+        {/* All three boxes share one grid on purpose — with the old
+            "Useful websites"/"Useful tools" split (Step 15–18) gone
+            (merged into one "Free tools & sites" box, Step 20), there
+            are exactly 3 boxes here now, so a 3-column grid fills
+            evenly instead of leaving a half-empty row like the old
+            2-column Interview-prep-alone grid did. */}
         <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
           {RESOURCE_CATEGORIES.map((category) => (
             <ResourceCategoryBox key={category.key} {...category} />
           ))}
+          <ComingSoonBox
+            title="Interview prep"
+            description="Question banks, mock-interview tips, and company-specific prep — planned, not built yet."
+          />
         </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ComingSoonBox
-          title="Interview prep"
-          description="Question banks, mock-interview tips, and company-specific prep — planned, not built yet."
-        />
       </div>
     </AppShell>
   );

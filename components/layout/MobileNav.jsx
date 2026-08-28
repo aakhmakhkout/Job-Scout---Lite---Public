@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Briefcase, GraduationCap, ClipboardList, CalendarClock } from 'lucide-react';
+import { LayoutDashboard, Briefcase, GraduationCap, ClipboardList, CalendarClock, Shield } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
@@ -12,12 +12,15 @@ const NAV_ITEMS = [
   { href: '/interviews', label: 'Interviews', icon: CalendarClock },
 ];
 
-export default function MobileNav() {
+const ADMIN_NAV_ITEM = { href: '/admin', label: 'Admin', icon: Shield };
+
+export default function MobileNav({ isAdmin = false }) {
   const pathname = usePathname();
+  const items = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-ink/10 bg-white dark:border-white/10 dark:bg-slate-950 md:hidden">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = pathname?.startsWith(item.href);
         const Icon = item.icon;
         return (

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Briefcase, GraduationCap, ClipboardList, CalendarClock } from 'lucide-react';
+import { LayoutDashboard, Briefcase, GraduationCap, ClipboardList, CalendarClock, Shield } from 'lucide-react';
 import UserMenu from './UserMenu';
 
 const NAV_ITEMS = [
@@ -13,8 +13,11 @@ const NAV_ITEMS = [
   { href: '/interviews', label: 'Interviews', icon: CalendarClock },
 ];
 
-export default function Sidebar({ userEmail }) {
+const ADMIN_NAV_ITEM = { href: '/admin', label: 'Admin', icon: Shield };
+
+export default function Sidebar({ userEmail, isAdmin = false }) {
   const pathname = usePathname();
+  const items = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
 
   return (
     <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col overflow-y-auto border-r border-ink/10 bg-paper-dim px-4 py-6 dark:border-white/10 dark:bg-slate-950 md:flex">
@@ -26,7 +29,7 @@ export default function Sidebar({ userEmail }) {
       </div>
 
       <nav className="flex flex-col gap-1">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname?.startsWith(item.href);
           const Icon = item.icon;
           return (
@@ -47,7 +50,7 @@ export default function Sidebar({ userEmail }) {
       </nav>
 
       <div className="mt-auto space-y-3">
-        {userEmail && <UserMenu userEmail={userEmail} />}
+        {userEmail && <UserMenu userEmail={userEmail} isAdmin={isAdmin} />}
         <div className="rounded-card border border-ink/10 bg-white p-3 text-xs text-ink-muted dark:border-white/10 dark:bg-slate-800 dark:text-slate-400">
           <p className="ledger-num">Free tier</p>
           <p className="mt-1">Jobs cached for 4 days. Synced every 6 hours.</p>

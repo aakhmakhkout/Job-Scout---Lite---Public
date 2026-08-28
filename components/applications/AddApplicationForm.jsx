@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import { APPLICATION_STATUSES } from './StatusBadge';
 
 const EMPTY_FORM = {
@@ -130,15 +131,17 @@ export default function AddApplicationForm({ onAdd, onCancel }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-60"
+          className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-60"
         >
+          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
           {saving ? 'Adding…' : 'Add application'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-ink/15 px-4 py-2 text-sm font-medium hover:border-ink/30 dark:border-white/15"
+          className="flex items-center gap-1.5 rounded-md border border-ink/15 px-4 py-2 text-sm font-medium hover:border-ink/30 dark:border-white/15"
         >
+          <X className="h-3.5 w-3.5" strokeWidth={2.5} />
           Cancel
         </button>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ShieldOff, Plus, X } from 'lucide-react';
 
 export default function BlocklistManager({ blockedCompanies, onAdd, onRemove }) {
   const [input, setInput] = useState('');
@@ -21,10 +22,11 @@ export default function BlocklistManager({ blockedCompanies, onAdd, onRemove }) 
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium"
       >
-        <span>
+        <span className="flex items-center gap-2">
+          <ShieldOff className="h-4 w-4 text-ink-muted dark:text-slate-400" strokeWidth={2} />
           Blocked companies
           {blockedCompanies.length > 0 && (
-            <span className="ledger-num ml-2 text-xs text-ink-muted dark:text-slate-400">
+            <span className="ledger-num text-xs text-ink-muted dark:text-slate-400">
               ({blockedCompanies.length})
             </span>
           )}
@@ -43,8 +45,9 @@ export default function BlocklistManager({ blockedCompanies, onAdd, onRemove }) 
             />
             <button
               type="submit"
-              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
+              className="flex items-center gap-1 rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
             >
+              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
               Block
             </button>
           </form>
@@ -63,7 +66,7 @@ export default function BlocklistManager({ blockedCompanies, onAdd, onRemove }) 
                     aria-label={`Unblock ${entry.company_name}`}
                     className="hover:opacity-70"
                   >
-                    ×
+                    <X className="h-3 w-3" strokeWidth={2.5} />
                   </button>
                 </span>
               ))}

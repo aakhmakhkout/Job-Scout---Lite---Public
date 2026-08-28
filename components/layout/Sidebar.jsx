@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { LayoutDashboard, Briefcase, GraduationCap, ClipboardList, CalendarClock } from 'lucide-react';
 import UserMenu from './UserMenu';
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/jobs', label: 'Jobs' },
-  { href: '/internships', label: 'Internships' },
-  { href: '/applications', label: 'Applications' },
-  { href: '/interviews', label: 'Interviews' },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/jobs', label: 'Jobs', icon: Briefcase },
+  { href: '/internships', label: 'Internships', icon: GraduationCap },
+  { href: '/applications', label: 'Applications', icon: ClipboardList },
+  { href: '/interviews', label: 'Interviews', icon: CalendarClock },
 ];
 
 export default function Sidebar({ userEmail }) {
@@ -27,16 +28,18 @@ export default function Sidebar({ userEmail }) {
       <nav className="flex flex-col gap-1">
         {NAV_ITEMS.map((item) => {
           const active = pathname?.startsWith(item.href);
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 active
                   ? 'bg-brand/10 text-brand dark:bg-brand/15 dark:text-brand-light'
                   : 'text-ink-soft hover:bg-ink/5 dark:text-slate-300 dark:hover:bg-white/5'
               }`}
             >
+              <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
               {item.label}
             </Link>
           );

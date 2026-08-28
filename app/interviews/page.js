@@ -1,3 +1,4 @@
+import { CalendarClock } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import EmptyState from '@/components/ui/EmptyState';
 import InterviewCard from '@/components/applications/InterviewCard';
@@ -29,7 +30,7 @@ export default async function InterviewsPage() {
   }
 
   return (
-    <AppShell title="Interviews" subtitle="Upcoming interviews, soonest first">
+    <AppShell title="Interviews" subtitle="Upcoming interviews, soonest first" icon={CalendarClock}>
       {loadError ? (
         <EmptyState
           title="Couldn't load interviews"

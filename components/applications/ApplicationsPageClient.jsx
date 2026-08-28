@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Table2, Columns3, Plus, X } from 'lucide-react';
 import { JobCardSkeleton } from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/ToastProvider';
 import ApplicationTable from './ApplicationTable';
 import ApplicationKanban from './ApplicationKanban';
 import AddApplicationForm from './AddApplicationForm';
+
+const VIEW_ICONS = { table: Table2, kanban: Columns3 };
 
 export default function ApplicationsPageClient() {
   const [applications, setApplications] = useState([]);
@@ -114,28 +117,33 @@ export default function ApplicationsPageClient() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-md border border-ink/15 p-0.5 dark:border-white/15">
-          {['table', 'kanban'].map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              className={`rounded px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                view === v
-                  ? 'bg-brand text-white'
-                  : 'text-ink-soft hover:bg-ink/5 dark:text-slate-300 dark:hover:bg-white/5'
-              }`}
-            >
-              {v}
-            </button>
-          ))}
+          {['table', 'kanban'].map((v) => {
+            const Icon = VIEW_ICONS[v];
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+                  view === v
+                    ? 'bg-brand text-white'
+                    : 'text-ink-soft hover:bg-ink/5 dark:text-slate-300 dark:hover:bg-white/5'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
+                {v}
+              </button>
+            );
+          })}
         </div>
 
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
+          className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
         >
-          {showForm ? 'Close' : '+ Add application'}
+          {showForm ? <X className="h-3.5 w-3.5" strokeWidth={2.5} /> : <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />}
+          {showForm ? 'Close' : 'Add application'}
         </button>
       </div>
 

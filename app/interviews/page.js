@@ -1,37 +1,43 @@
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, ShieldCheck } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import EmptyState from '@/components/ui/EmptyState';
 import InterviewCard from '@/components/applications/InterviewCard';
-import { createClient } from '@/lib/supabase/server';
+import { getViewer } from '@/lib/viewer';
 
 // Server Component — reads straight from Supabase since this page is
 // read-only (no client interactivity needed), which keeps the client JS
 // bundle smaller than routing it through a fetch('/api/...') round trip.
 export default async function InterviewsPage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const viewer = await getViewer();
+  const isAdmin = viewer.kind === 'admin';
 
   let interviews = [];
   let loadError = false;
-  try {
-    const { data, error } = await supabase
-      .from('applications')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('status', 'Interview')
-      .not('interview_date', 'is', null)
-      .order('interview_date', { ascending: true });
-    if (error) throw error;
-    interviews = data || [];
-  } catch (err) {
-    loadError = true;
+  if (!isAdmin) {
+    try {
+      const { data, error } = await viewer.supabase
+        .from('applications')
+        .select('*')
+        .eq('user_id', viewer.user.id)
+        .eq('status', 'Interview')
+        .not('interview_date', 'is', null)
+        .order('interview_date', { ascending: true });
+      if (error) throw error;
+      interviews = data || [];
+    } catch (err) {
+      loadError = true;
+    }
   }
 
   return (
     <AppShell title="Interviews" subtitle="Upcoming interviews, soonest first" icon={CalendarClock}>
-      {loadError ? (
+      {isAdmin ? (
+        <EmptyState
+          icon={ShieldCheck}
+          title="Admin accounts don't track interviews"
+          description="This page is per-user, tied to a regular JobScout account. Log in as a regular user to use it — the Admin tab is where your account-management tools live instead."
+        />
+      ) : loadError ? (
         <EmptyState
           title="Couldn't load interviews"
           description="There was a problem reaching the database. Try refreshing the page."

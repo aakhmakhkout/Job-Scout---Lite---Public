@@ -8,7 +8,7 @@ import ComingSoonBox from '@/components/dashboard/ComingSoonBox';
 import { getJobsCache } from '@/lib/jobsCache';
 import { computeMarketSnapshot, computeTopCompanies } from '@/lib/dashboardStats';
 import { RESOURCE_CATEGORIES } from '@/lib/resourceCategories';
-import { createClient } from '@/lib/supabase/server';
+import { getViewer } from '@/lib/viewer';
 
 function formatSyncTime(iso) {
   if (!iso) return 'never — run the scraper';
@@ -21,28 +21,31 @@ function formatSyncTime(iso) {
 }
 
 export default async function DashboardPage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const viewer = await getViewer();
+  const isAdmin = viewer.kind === 'admin';
 
-  // getJobsCache() already has its own internal fallback and never
-  // rejects. The two Supabase count queries could still reject outright
-  // on a genuine network failure (not just a query error, which Supabase
-  // returns as data rather than throwing) — Promise.allSettled means one
-  // failing doesn't take the whole Dashboard down with it.
+  // Applied/Interview counts come from the `applications` table, which
+  // only has rows for real Supabase Auth users — an admin session has
+  // no such rows (and shouldn't; admins aren't tracked as job-seekers
+  // here). Skipping these two queries entirely for admin, rather than
+  // running them with a null user id, avoids both a crash and a
+  // misleading "0" that looks like a real empty state.
   const [cacheResult, appliedResult, interviewResult] = await Promise.allSettled([
     getJobsCache(),
-    supabase
-      .from('applications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'Applied'),
-    supabase
-      .from('applications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'Interview'),
+    isAdmin
+      ? Promise.resolve({ count: null })
+      : viewer.supabase
+          .from('applications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', viewer.user.id)
+          .eq('status', 'Applied'),
+    isAdmin
+      ? Promise.resolve({ count: null })
+      : viewer.supabase
+          .from('applications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', viewer.user.id)
+          .eq('status', 'Interview'),
   ]);
 
   const cache =
@@ -51,6 +54,13 @@ export default async function DashboardPage() {
     appliedResult.status === 'fulfilled' ? appliedResult.value.count ?? 0 : null;
   const interviewCount =
     interviewResult.status === 'fulfilled' ? interviewResult.value.count ?? 0 : null;
+
+  // Real failures (query rejected) vs. intentionally-skipped-for-admin
+  // both come out as `null` above, but only the former is worth
+  // warning about — an admin seeing "couldn't load stats, try
+  // refreshing" for something that was never going to load would be a
+  // confusing, inaccurate message.
+  const statsLoadFailed = !isAdmin && (appliedCount === null || interviewCount === null);
 
   const jobs = cache.jobs || [];
   const newJobsToday = jobs.filter((j) => {
@@ -71,16 +81,23 @@ export default async function DashboardPage() {
           icon={ShieldCheck}
           accent="trusted"
         />
-        <StatCard label="Applied" value={appliedCount ?? '—'} icon={Send} accent="brand" />
+        <StatCard
+          label="Applied"
+          value={isAdmin ? '—' : appliedCount ?? '—'}
+          hint={isAdmin ? 'Not tracked for admin' : undefined}
+          icon={Send}
+          accent="brand"
+        />
         <StatCard
           label="Upcoming interviews"
-          value={interviewCount ?? '—'}
+          value={isAdmin ? '—' : interviewCount ?? '—'}
+          hint={isAdmin ? 'Not tracked for admin' : undefined}
           icon={CalendarClock}
           accent="rust"
         />
       </div>
 
-      {(appliedCount === null || interviewCount === null) && (
+      {statsLoadFailed && (
         <p className="mt-3 text-xs text-suspicious">
           Couldn't load some stats from the database — showing what's available. Try refreshing.
         </p>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown } from 'lucide-react';
 import JobCard from '@/components/jobs/JobCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { JobCardSkeleton } from '@/components/ui/Skeleton';
@@ -225,7 +226,8 @@ export default function JobsPageClient({ jobType = 'Job' }) {
   return (
     <>
       {cacheGeneratedAt && (
-        <p className="mb-3 text-xs text-ink-muted dark:text-slate-400">
+        <p className="mb-3 flex items-center gap-1.5 text-xs text-ink-muted dark:text-slate-400">
+          <Clock className="h-3.5 w-3.5" strokeWidth={2} />
           Cache last updated{' '}
           {new Date(cacheGeneratedAt).toLocaleString('en-US', {
             month: 'short',
@@ -245,46 +247,64 @@ export default function JobsPageClient({ jobType = 'Job' }) {
       </div>
 
       <div className="flex flex-wrap gap-3 rounded-card border border-ink/10 bg-white p-4 dark:border-white/10 dark:bg-slate-800 md:items-center md:gap-4">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          placeholder={`Search title or company`}
-          className="w-full min-w-[180px] flex-1 rounded-md border border-ink/15 bg-transparent px-3 py-2 text-sm placeholder:text-ink-muted focus:border-brand dark:border-white/15 dark:placeholder:text-slate-500"
-        />
+        <div className="relative min-w-[180px] flex-1">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted dark:text-slate-500"
+            strokeWidth={2}
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder={`Search title or company`}
+            className="w-full rounded-md border border-ink/15 bg-transparent py-2 pl-9 pr-3 text-sm placeholder:text-ink-muted focus:border-brand dark:border-white/15 dark:placeholder:text-slate-500"
+          />
+        </div>
 
-        <select
-          value={role}
-          onChange={(e) => {
-            setRole(e.target.value);
-            setPage(1);
-          }}
-          className="select-field shrink-0 rounded-md border border-ink/15 px-3 py-2 text-sm dark:border-white/15"
-        >
-          {roles.map((r) => (
-            <option key={r} value={r}>
-              {r === 'all' ? 'All roles' : r}
-            </option>
-          ))}
-        </select>
+        <div className="relative shrink-0">
+          <Briefcase
+            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted dark:text-slate-500"
+            strokeWidth={2}
+          />
+          <select
+            value={role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              setPage(1);
+            }}
+            className="select-field rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
+          >
+            {roles.map((r) => (
+              <option key={r} value={r}>
+                {r === 'all' ? 'All roles' : r}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <select
-          value={location}
-          onChange={(e) => {
-            setLocation(e.target.value);
-            setPage(1);
-          }}
-          className="select-field shrink-0 rounded-md border border-ink/15 px-3 py-2 text-sm dark:border-white/15"
-        >
-          {locations.map((l) => (
-            <option key={l} value={l}>
-              {l === 'all' ? 'All locations' : l}
-            </option>
-          ))}
-        </select>
+        <div className="relative shrink-0">
+          <MapPin
+            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted dark:text-slate-500"
+            strokeWidth={2}
+          />
+          <select
+            value={location}
+            onChange={(e) => {
+              setLocation(e.target.value);
+              setPage(1);
+            }}
+            className="select-field rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
+          >
+            {locations.map((l) => (
+              <option key={l} value={l}>
+                {l === 'all' ? 'All locations' : l}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm">
           <input
@@ -299,14 +319,20 @@ export default function JobsPageClient({ jobType = 'Job' }) {
           Remote only
         </label>
 
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="select-field shrink-0 rounded-md border border-ink/15 px-3 py-2 text-sm dark:border-white/15"
-        >
-          <option value="newest">Sort: Newest</option>
-          <option value="trust">Sort: Trust score</option>
-        </select>
+        <div className="relative shrink-0">
+          <ArrowUpDown
+            className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted dark:text-slate-500"
+            strokeWidth={2}
+          />
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="select-field rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
+          >
+            <option value="newest">Sort: Newest</option>
+            <option value="trust">Sort: Trust score</option>
+          </select>
+        </div>
       </div>
 
       <p className="mt-4 text-xs text-ink-muted dark:text-slate-400">
@@ -346,9 +372,10 @@ export default function JobsPageClient({ jobType = 'Job' }) {
           <button
             type="button"
             onClick={() => setPage((p) => p + 1)}
-            className="rounded-md border border-ink/15 px-4 py-2 text-sm font-medium hover:border-ink/30 dark:border-white/15 dark:hover:border-white/30"
+            className="flex items-center gap-1.5 rounded-md border border-ink/15 px-4 py-2 text-sm font-medium hover:border-ink/30 dark:border-white/15 dark:hover:border-white/30"
           >
             Load more
+            <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.25} />
           </button>
         </div>
       )}

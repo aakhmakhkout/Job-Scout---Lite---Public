@@ -1,4 +1,4 @@
-import { Zap, ShieldCheck, Send, CalendarClock } from 'lucide-react';
+import { Zap, ShieldCheck, Send, CalendarClock, LayoutDashboard } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import StatCard from '@/components/dashboard/StatCard';
 import MarketSnapshotChart from '@/components/dashboard/MarketSnapshotChart';
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
   const topCompanies = computeTopCompanies(jobs);
 
   return (
-    <AppShell title="Dashboard" subtitle={`Last scraper sync: ${formatSyncTime(cache.generated_at)}`}>
+    <AppShell title="Dashboard" subtitle={`Last scraper sync: ${formatSyncTime(cache.generated_at)}`} icon={LayoutDashboard}>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="New jobs today" value={newJobsToday} icon={Zap} accent="brand" />
         <StatCard

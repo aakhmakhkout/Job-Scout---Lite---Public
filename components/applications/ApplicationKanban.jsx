@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import StatusBadge, { APPLICATION_STATUSES } from './StatusBadge';
 
 function toDatetimeLocalValue(iso) {
@@ -44,8 +45,9 @@ function ApplicationKanbanCard({ app, onDragStart, onDelete, onInterviewDateChan
       <button
         type="button"
         onClick={() => onDelete(app.id)}
-        className="mt-2 text-xs font-medium text-suspicious hover:underline"
+        className="mt-2 flex items-center gap-1 text-xs font-medium text-suspicious hover:underline"
       >
+        <Trash2 className="h-3 w-3" strokeWidth={2} />
         Delete
       </button>
     </div>
@@ -91,7 +93,13 @@ export default function ApplicationKanban({ applications, onStatusChange, onInte
                 {jobs.length}
               </span>
             </div>
-            <div className="flex min-h-[3rem] flex-col gap-2">
+            {/* Capped to the viewport height and scrollable internally —
+                without this, a column with many cards just kept growing
+                the whole page taller instead of staying within view,
+                which got unwieldy once a column had more than a
+                handful of applications in it. The column header above
+                stays put; only the card list scrolls. */}
+            <div className="scrollbar-hide flex min-h-[3rem] max-h-[65vh] flex-col gap-2 overflow-y-auto pr-0.5">
               {jobs.map((app) => (
                 <ApplicationKanbanCard
                   key={app.id}

@@ -1,5 +1,6 @@
 'use client';
 
+import { Trash2 } from 'lucide-react';
 import StatusBadge, { APPLICATION_STATUSES } from './StatusBadge';
 
 function formatDate(value) {
@@ -75,8 +76,9 @@ export default function ApplicationTable({ applications, onStatusChange, onInter
                 <button
                   type="button"
                   onClick={() => onDelete(app.id)}
-                  className="text-xs font-medium text-suspicious hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-suspicious hover:underline"
                 >
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                   Delete
                 </button>
               </td>

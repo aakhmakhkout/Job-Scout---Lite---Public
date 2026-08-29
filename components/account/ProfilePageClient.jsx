@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import RecoveryKeyDisplay from './RecoveryKeyDisplay';
 import DeleteAccountModal from './DeleteAccountModal';
+import InactivityNotice from './InactivityNotice';
 import { useToast } from '@/components/ui/ToastProvider';
 
 export default function ProfilePageClient({ userEmail }) {
@@ -54,6 +55,8 @@ export default function ProfilePageClient({ userEmail }) {
         <h2 className="text-sm font-semibold">Account</h2>
         <p className="mt-2 text-sm text-ink-soft dark:text-slate-300">{userEmail}</p>
       </div>
+
+      <InactivityNotice />
 
       <div className="rounded-card border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-slate-800">
         <h2 className="text-sm font-semibold">Recovery key</h2>

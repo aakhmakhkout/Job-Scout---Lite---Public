@@ -10,7 +10,7 @@ import BlocklistManager from '@/components/jobs/BlocklistManager';
 
 const PAGE_SIZE = 20;
 
-export default function JobsPageClient({ jobType = 'Job' }) {
+export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   const noun = jobType === 'Internship' ? 'internship' : 'job';
   const [allJobs, setAllJobs] = useState([]);
   const [blockedCompanies, setBlockedCompanies] = useState([]);
@@ -58,10 +58,21 @@ export default function JobsPageClient({ jobType = 'Job' }) {
         return;
       }
 
-      // Blocklist, saved jobs, and applications are all "nice to have"
-      // context for hydrating card state — the page is still fully
-      // usable without them, so a failure here is a soft warning, not a
-      // page-level error.
+      // Blocklist, saved jobs, and applications are all owned by a real
+      // Supabase Auth user — an admin session has no rows in any of
+      // these tables (same reasoning as Dashboard/Applications/
+      // Interviews since Step 23), so those fetches were never going
+      // to succeed. Step 23 flagged this as a known rough edge
+      // ("Couldn't load your applications..." is misleading when it
+      // was never going to load in the first place) and deferred the
+      // fix to whenever this file got touched for the remove-a-job
+      // feature — that's now, so it's fixed here instead of carried
+      // forward again.
+      if (isAdmin) {
+        setLoading(false);
+        return;
+      }
+
       const [blocklistRes, savedRes, applicationsRes] = await Promise.allSettled([
         fetch('/api/blocklist'),
         fetch('/api/saved-jobs'),
@@ -138,6 +149,30 @@ export default function JobsPageClient({ jobType = 'Job' }) {
     } catch (e) {
       setBlockedCompanies(prev);
       addToast('Could not unblock company', 'warning');
+    }
+  }
+
+  // Admin-only: hide a listing from Jobs/Internships until the next
+  // scraper sync (or until restored from Admin → Removed listings).
+  // Removed from local state immediately on success rather than
+  // waiting for a refetch — the whole point is it should disappear
+  // right away, not "eventually."
+  async function handleAdminRemove(job) {
+    try {
+      const res = await fetch('/api/admin/hidden-listings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apply_url: job.apply_url,
+          title: job.title,
+          company: job.company,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to remove');
+      setAllJobs((prev) => prev.filter((j) => j.apply_url !== job.apply_url));
+      addToast('Removed — hidden until the next sync. Undo anytime from Admin → Removed listings.');
+    } catch {
+      addToast('Could not remove this listing', 'warning');
     }
   }
 
@@ -238,13 +273,15 @@ export default function JobsPageClient({ jobType = 'Job' }) {
         </p>
       )}
 
-      <div className="mb-4">
-        <BlocklistManager
-          blockedCompanies={blockedCompanies}
-          onAdd={handleBlock}
-          onRemove={handleUnblock}
-        />
-      </div>
+      {!isAdmin && (
+        <div className="mb-4">
+          <BlocklistManager
+            blockedCompanies={blockedCompanies}
+            onAdd={handleBlock}
+            onRemove={handleUnblock}
+          />
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 rounded-card border border-ink/10 bg-white p-4 dark:border-white/10 dark:bg-slate-800 md:items-center md:gap-4">
         <div className="relative min-w-[180px] flex-1">
@@ -357,7 +394,9 @@ export default function JobsPageClient({ jobType = 'Job' }) {
             <JobCard
               key={job.id}
               job={job}
-              onBlock={handleBlock}
+              onBlock={isAdmin ? undefined : handleBlock}
+              isAdmin={isAdmin}
+              onAdminRemove={handleAdminRemove}
               initialSaved={Boolean(savedByUrl[job.apply_url])}
               initialSavedJobId={savedByUrl[job.apply_url] || null}
               initialApplied={Boolean(appliedByUrl[job.apply_url])}

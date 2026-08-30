@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import RecoveryKeyDisplay from './RecoveryKeyDisplay';
 import DeleteAccountModal from './DeleteAccountModal';
 import InactivityNotice from './InactivityNotice';
 import { useToast } from '@/components/ui/ToastProvider';
 
-export default function ProfilePageClient({ userEmail }) {
+export default function ProfilePageClient({ userEmail, daysInactive }) {
   const [recoveryKey, setRecoveryKey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState(false);
@@ -56,7 +57,13 @@ export default function ProfilePageClient({ userEmail }) {
         <p className="mt-2 text-sm text-ink-soft dark:text-slate-300">{userEmail}</p>
       </div>
 
-      <InactivityNotice />
+      <InactivityNotice daysInactive={daysInactive} />
+      <Link
+        href="/privacy-policy#inactivity-and-account-removal"
+        className="-mt-3 inline-block text-xs font-medium text-brand hover:underline"
+      >
+        Read the full inactivity &amp; account removal policy →
+      </Link>
 
       <div className="rounded-card border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-slate-800">
         <h2 className="text-sm font-semibold">Recovery key</h2>

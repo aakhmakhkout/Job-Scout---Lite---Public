@@ -9,6 +9,12 @@
 // align="center" is used on auth pages (login/signup/etc.), where the
 // whole layout is a centered column and a right-aligned badge would
 // look oddly detached from the centered card above it.
+//
+// Step 29: added the "Privacy" link using next/link's <Link> (client-
+// side navigation, no full page reload) — the two icon links stay
+// plain <a> tags since they're external URLs anyway.
+
+import Link from 'next/link';
 
 function GithubIcon(props) {
   return (
@@ -34,6 +40,10 @@ export default function Footer({ align = 'end' }) {
       }`}
     >
       <div className="flex items-center gap-3 text-xs text-ink-muted dark:text-slate-500">
+        <Link href="/privacy-policy" className="transition-colors hover:text-brand">
+          Privacy
+        </Link>
+        <span className="text-ink/20 dark:text-white/20">·</span>
         <span>Copyright © 2026 Noumaan Nabi</span>
         <a
           href="https://www.github.com/aakhmakhkout"

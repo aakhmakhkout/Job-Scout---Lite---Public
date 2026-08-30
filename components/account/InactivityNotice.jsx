@@ -1,36 +1,76 @@
-import { Clock } from 'lucide-react';
+import { Clock, AlertTriangle } from 'lucide-react';
+import { INACTIVE_WINDOW_DAYS } from '@/lib/adminUsers';
 
-// Step 25 scope, deliberately: the notice exists, with the right copy
-// and visual treatment, and nothing more. It always shows the same
-// standing-policy message below, regardless of the account's real
-// last_seen_at — NOT wired to lib/adminUsers.js's real
-// daysSinceActive()/isInactive() yet. That's intentional, per what was
-// asked: structure and copy now, real logic and the day-25 escalation
-// as a later follow-up. The privacy-policy page (Step 29,
-// /privacy-policy#inactivity-and-account-removal) now documents this
-// same policy for anyone who wants the full picture — linked right
-// below this component on the Profile page.
+// Step 30 — now wired to a real days-since-active number (see
+// app/profile/page.js), computed with the exact same daysSinceActive()
+// the admin purge route (Step 24) uses. That was a deliberate scoping
+// choice, not the original Step 25 mock spec verbatim: the original
+// comment here called for a stricter "2 consecutive days of activity"
+// reset condition, tracked with its own separate streak state. Built
+// that way, this notice's countdown could disagree with reality — e.g.
+// showing "terminated in 2 days" the same visit that a single login
+// already made the account safe under the real last_seen_at-based
+// purge check. Simplified deliberately: this notice uses the identical
+// clock that governs actual removal, so it can never show a number
+// that's scarier (or safer) than what will actually happen. The
+// privacy policy's inactivity section (Step 29) describes this same
+// simplified behavior, not the original 2-day-streak draft.
 //
-// The eventual behavior, kept here as a spec for that follow-up rather
-// than left undocumented:
-//   - Day 0-24 inactive: the standing message below.
-//   - Day 25-29 inactive: escalates to "Your account will be
-//     terminated in {30 - daysInactive} days. Log in for 2 consecutive
-//     days to reset the timer and keep your account active."
-//   - Any 2 consecutive days of activity within that window resets the
-//     inactivity clock back to 0, same as a fresh day-0 account.
-//   - Day 30+: handled by Admin's existing bulk-purge action
-//     (Step 24), not by anything client-facing — by then the notice
-//     itself is moot.
-export default function InactivityNotice() {
+// Three states, based on daysInactive:
+//   - null or < 25: the standing low-key policy reminder (unchanged
+//     copy/visual treatment from Step 25).
+//   - 25-29: escalates to a specific countdown, stronger visual weight.
+//   - 30+: eligible-for-removal wording — phrased as "may be removed"
+//     rather than "will be removed on [date]", since the actual removal
+//     is a periodic admin-initiated batch (Step 24), not an instant or
+//     scheduled automatic action; by this point it could happen at any
+//     time the admin next runs it, or not for a while if they haven't.
+export default function InactivityNotice({ daysInactive }) {
+  const isEscalated = daysInactive !== null && daysInactive >= 25 && daysInactive < INACTIVE_WINDOW_DAYS;
+  const isEligible = daysInactive !== null && daysInactive >= INACTIVE_WINDOW_DAYS;
+  const daysRemaining = isEscalated ? INACTIVE_WINDOW_DAYS - daysInactive : null;
+
+  if (isEligible) {
+    return (
+      <div className="rounded-card border border-suspicious/40 bg-suspicious/5 p-4 dark:border-suspicious/40 dark:bg-suspicious/10">
+        <div className="flex gap-2.5">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-suspicious" strokeWidth={2.25} />
+          <p className="text-xs leading-relaxed text-ink-soft dark:text-slate-300">
+            <span className="font-medium text-suspicious">Account inactive: </span>
+            You haven&apos;t logged in for {daysInactive} days — your account is now eligible for
+            removal to keep JobScout Lite free to run. It hasn&apos;t been deleted yet, but it may
+            be at any time. Just being here now helps — log in regularly to stay active.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEscalated) {
+    return (
+      <div className="rounded-card border border-suspicious/30 bg-suspicious/5 p-4 dark:border-suspicious/30 dark:bg-suspicious/10">
+        <div className="flex gap-2.5">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-suspicious" strokeWidth={2.25} />
+          <p className="text-xs leading-relaxed text-ink-soft dark:text-slate-300">
+            <span className="font-medium text-suspicious">Inactive-account policy: </span>
+            You&apos;ve been inactive for {daysInactive} days. Your account will become eligible
+            for removal in {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} if you don&apos;t
+            log in again — visiting any page (like this one) keeps it active.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-card border border-review/30 bg-review/5 p-4 dark:border-review/30 dark:bg-review/10">
       <div className="flex gap-2.5">
         <Clock className="mt-0.5 h-4 w-4 shrink-0 text-review" strokeWidth={2.25} />
         <p className="text-xs leading-relaxed text-ink-soft dark:text-slate-300">
           <span className="font-medium text-review">Inactive-account policy: </span>
-          To keep JobScout Lite free to run, accounts that stay inactive for more than 30 days
-          may be automatically removed. Log in at least once a month to keep yours active.
+          To keep JobScout Lite free to run, accounts that stay inactive for more than{' '}
+          {INACTIVE_WINDOW_DAYS} days may be removed. Log in at least once a month to keep yours
+          active.
         </p>
       </div>
     </div>

@@ -7,8 +7,10 @@ import EmptyState from '@/components/ui/EmptyState';
 import { JobCardSkeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/ToastProvider';
 import BlocklistManager from '@/components/jobs/BlocklistManager';
+import { trustBadgeLabel } from '@/lib/mockData';
 
 const PAGE_SIZE = 20;
+const FRESH_WINDOW_MS = 24 * 3_600_000; // Step 32 — see the "newest" sort comparator below.
 
 export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   const noun = jobType === 'Internship' ? 'internship' : 'job';
@@ -194,6 +196,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   );
 
   const filtered = useMemo(() => {
+    const now = Date.now();
     let list = visibleJobs.filter((job) => {
       const matchesSearch =
         !search ||
@@ -208,6 +211,31 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
 
     list = [...list].sort((a, b) => {
       if (sortBy === 'trust') return b.trust_score - a.trust_score;
+
+      // Step 32: within the "Newest" sort, jobs posted less than 24h
+      // ago get pulled to the top, Trusted first then Unverified —
+      // fresh jobs are disproportionately Unverified simply because
+      // nothing's had time to be double-checked yet (no salary listed,
+      // no recency bonus expired), which was burying the small number
+      // of genuinely Trusted-fresh jobs under a wall of Unverified
+      // ones and hurting the browsing experience. Suspicious jobs are
+      // deliberately excluded from this boost — surfacing a job with
+      // an actual negative signal just because it's fresh would work
+      // against the trust score's entire purpose. Everything outside
+      // this boosted group (older than 24h, or Suspicious regardless
+      // of age) falls back to plain newest-first, same as before.
+      const aFresh = now - new Date(a.posted_at).getTime() < FRESH_WINDOW_MS;
+      const bFresh = now - new Date(b.posted_at).getTime() < FRESH_WINDOW_MS;
+      const aTier = trustBadgeLabel(a);
+      const bTier = trustBadgeLabel(b);
+      const aBoosted = aFresh && aTier !== 'Suspicious';
+      const bBoosted = bFresh && bTier !== 'Suspicious';
+
+      if (aBoosted !== bBoosted) return aBoosted ? -1 : 1;
+      if (aBoosted && bBoosted && aTier !== bTier) {
+        // Both fresh and boosted, different tiers — Trusted before Unverified.
+        return aTier === 'Trusted' ? -1 : 1;
+      }
       return new Date(b.posted_at) - new Date(a.posted_at);
     });
 

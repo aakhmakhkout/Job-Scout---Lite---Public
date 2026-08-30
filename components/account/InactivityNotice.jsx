@@ -6,8 +6,10 @@ import { Clock } from 'lucide-react';
 // last_seen_at — NOT wired to lib/adminUsers.js's real
 // daysSinceActive()/isInactive() yet. That's intentional, per what was
 // asked: structure and copy now, real logic and the day-25 escalation
-// as a later follow-up. Also feeds the privacy-policy document planned
-// for a future update, which will need to describe this same policy.
+// as a later follow-up. The privacy-policy page (Step 29,
+// /privacy-policy#inactivity-and-account-removal) now documents this
+// same policy for anyone who wants the full picture — linked right
+// below this component on the Profile page.
 //
 // The eventual behavior, kept here as a spec for that follow-up rather
 // than left undocumented:

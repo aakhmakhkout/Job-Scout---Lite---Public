@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import RecoveryKeyDisplay from './RecoveryKeyDisplay';
 import DeleteAccountModal from './DeleteAccountModal';
 import InactivityNotice from './InactivityNotice';
@@ -57,6 +58,12 @@ export default function ProfilePageClient({ userEmail }) {
       </div>
 
       <InactivityNotice />
+      <Link
+        href="/privacy-policy#inactivity-and-account-removal"
+        className="-mt-3 inline-block text-xs font-medium text-brand hover:underline"
+      >
+        Read the full inactivity &amp; account removal policy →
+      </Link>
 
       <div className="rounded-card border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-slate-800">
         <h2 className="text-sm font-semibold">Recovery key</h2>

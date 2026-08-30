@@ -9,6 +9,7 @@ import { getJobsCache } from '@/lib/jobsCache';
 import { computeMarketSnapshot, computeTopCompanies } from '@/lib/dashboardStats';
 import { RESOURCE_CATEGORIES } from '@/lib/resourceCategories';
 import { getWidgetSettings } from '@/lib/dashboardWidgets';
+import { getResourceItemsByCategory } from '@/lib/resourceItems';
 import { getViewer } from '@/lib/viewer';
 
 function formatSyncTime(iso) {
@@ -31,28 +32,34 @@ export default async function DashboardPage() {
   // here). Skipping these two queries entirely for admin, rather than
   // running them with a null user id, avoids both a crash and a
   // misleading "0" that looks like a real empty state.
-  const [cacheResult, appliedResult, interviewResult, widgetsResult] = await Promise.allSettled([
-    getJobsCache(),
-    isAdmin
-      ? Promise.resolve({ count: null })
-      : viewer.supabase
-          .from('applications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', viewer.user.id)
-          .eq('status', 'Applied'),
-    isAdmin
-      ? Promise.resolve({ count: null })
-      : viewer.supabase
-          .from('applications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', viewer.user.id)
-          .eq('status', 'Interview'),
-    // Step 26 — admin-manageable visibility/copy per Dashboard section.
-    // getWidgetSettings() already fails open to all-visible/default-copy
-    // internally, so this entry can't itself cause the page to show
-    // less than it would have before this feature existed.
-    getWidgetSettings(viewer.supabase),
-  ]);
+  const [cacheResult, appliedResult, interviewResult, widgetsResult, resourceItemsResult] =
+    await Promise.allSettled([
+      getJobsCache(),
+      isAdmin
+        ? Promise.resolve({ count: null })
+        : viewer.supabase
+            .from('applications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', viewer.user.id)
+            .eq('status', 'Applied'),
+      isAdmin
+        ? Promise.resolve({ count: null })
+        : viewer.supabase
+            .from('applications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', viewer.user.id)
+            .eq('status', 'Interview'),
+      // Step 26 — admin-manageable visibility/copy per Dashboard section.
+      // getWidgetSettings() already fails open to all-visible/default-copy
+      // internally, so this entry can't itself cause the page to show
+      // less than it would have before this feature existed.
+      getWidgetSettings(viewer.supabase),
+      // Step 27 — the actual links inside each resource box, now
+      // admin-managed via /admin/resources instead of hardcoded.
+      // Also fails open internally (all categories degrade to empty,
+      // which ResourceCategoryBox already renders as Coming-soon).
+      getResourceItemsByCategory(viewer.supabase),
+    ]);
 
   const cache =
     cacheResult.status === 'fulfilled' ? cacheResult.value : { generated_at: null, jobs: [] };
@@ -62,6 +69,8 @@ export default async function DashboardPage() {
     interviewResult.status === 'fulfilled' ? interviewResult.value.count ?? 0 : null;
   const widgets = widgetsResult.status === 'fulfilled' ? widgetsResult.value : {};
   const isVisible = (key) => widgets[key]?.visible !== false;
+  const resourceItemsByCategory =
+    resourceItemsResult.status === 'fulfilled' ? resourceItemsResult.value : {};
 
   // Real failures (query rejected) vs. intentionally-skipped-for-admin
   // both come out as `null` above, but only the former is worth
@@ -181,16 +190,18 @@ export default async function DashboardPage() {
               dynamic column-count system for. */}
           <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
             {visibleResourceCategories.map((category) => {
-              // Title/description can be admin-overridden (Step 26);
-              // `items` always comes from the code, not the database —
-              // per-item CRUD is still future work, listed on /admin.
+              // Title/description can be admin-overridden (Step 26).
+              // `items` now come from the resource_items table (Step
+              // 27), not from code — an empty array here correctly
+              // falls through to ResourceCategoryBox's own Coming-soon
+              // fallback, same as Interview prep.
               const override = widgets[`resource_${category.key}`] || {};
               return (
                 <ResourceCategoryBox
                   key={category.key}
-                  {...category}
                   title={override.title || category.title}
                   description={override.description || category.description}
+                  items={resourceItemsByCategory[category.key] || []}
                 />
               );
             })}

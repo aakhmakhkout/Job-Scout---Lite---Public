@@ -85,7 +85,7 @@ export default function ResourceCategoryBox({ title, description, items }) {
             const Icon = ICONS[item.icon] || Link2;
             return (
               <a
-                key={item.name}
+                key={item.id || item.name}
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"

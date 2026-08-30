@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown } from 'lucide-react';
+import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown, Bookmark } from 'lucide-react';
 import JobCard from '@/components/jobs/JobCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { JobCardSkeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/ToastProvider';
 import BlocklistManager from '@/components/jobs/BlocklistManager';
+import { trustBadgeLabel } from '@/lib/mockData';
 
 const PAGE_SIZE = 20;
+const FRESH_WINDOW_MS = 24 * 3_600_000; // Step 32 — see the "newest" sort comparator below.
 
 export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   const noun = jobType === 'Internship' ? 'internship' : 'job';
@@ -24,6 +26,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   const [role, setRole] = useState('all');
   const [location, setLocation] = useState('all');
   const [remoteOnly, setRemoteOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [page, setPage] = useState(1);
 
@@ -193,6 +196,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   );
 
   const filtered = useMemo(() => {
+    const now = Date.now();
     let list = visibleJobs.filter((job) => {
       const matchesSearch =
         !search ||
@@ -201,16 +205,42 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
       const matchesRole = role === 'all' || job.title === role;
       const matchesLocation = location === 'all' || job.location === location;
       const matchesRemote = !remoteOnly || (job.location || '').toLowerCase().includes('remote');
-      return matchesSearch && matchesRole && matchesLocation && matchesRemote;
+      const matchesSaved = !savedOnly || Boolean(savedByUrl[job.apply_url]);
+      return matchesSearch && matchesRole && matchesLocation && matchesRemote && matchesSaved;
     });
 
     list = [...list].sort((a, b) => {
       if (sortBy === 'trust') return b.trust_score - a.trust_score;
+
+      // Step 32: within the "Newest" sort, jobs posted less than 24h
+      // ago get pulled to the top, Trusted first then Unverified —
+      // fresh jobs are disproportionately Unverified simply because
+      // nothing's had time to be double-checked yet (no salary listed,
+      // no recency bonus expired), which was burying the small number
+      // of genuinely Trusted-fresh jobs under a wall of Unverified
+      // ones and hurting the browsing experience. Suspicious jobs are
+      // deliberately excluded from this boost — surfacing a job with
+      // an actual negative signal just because it's fresh would work
+      // against the trust score's entire purpose. Everything outside
+      // this boosted group (older than 24h, or Suspicious regardless
+      // of age) falls back to plain newest-first, same as before.
+      const aFresh = now - new Date(a.posted_at).getTime() < FRESH_WINDOW_MS;
+      const bFresh = now - new Date(b.posted_at).getTime() < FRESH_WINDOW_MS;
+      const aTier = trustBadgeLabel(a);
+      const bTier = trustBadgeLabel(b);
+      const aBoosted = aFresh && aTier !== 'Suspicious';
+      const bBoosted = bFresh && bTier !== 'Suspicious';
+
+      if (aBoosted !== bBoosted) return aBoosted ? -1 : 1;
+      if (aBoosted && bBoosted && aTier !== bTier) {
+        // Both fresh and boosted, different tiers — Trusted before Unverified.
+        return aTier === 'Trusted' ? -1 : 1;
+      }
       return new Date(b.posted_at) - new Date(a.posted_at);
     });
 
     return list;
-  }, [visibleJobs, search, role, location, remoteOnly, sortBy]);
+  }, [visibleJobs, search, role, location, remoteOnly, savedOnly, savedByUrl, sortBy]);
 
   const paged = filtered.slice(0, page * PAGE_SIZE);
 
@@ -355,6 +385,26 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
           />
           Remote only
         </label>
+
+        {/* Hidden for admin — admin sessions never have saved jobs (Step
+            25: Save is a personal-tracker action admin doesn't have),
+            so savedByUrl is always empty and this toggle would just
+            always show zero results. */}
+        {!isAdmin && (
+          <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm">
+            <input
+              type="checkbox"
+              checked={savedOnly}
+              onChange={(e) => {
+                setSavedOnly(e.target.checked);
+                setPage(1);
+              }}
+              className="h-4 w-4 rounded border-ink/30 text-brand focus:ring-brand"
+            />
+            <Bookmark className="h-3.5 w-3.5 text-ink-muted dark:text-slate-500" strokeWidth={2} />
+            Saved only
+          </label>
+        )}
 
         <div className="relative shrink-0">
           <ArrowUpDown

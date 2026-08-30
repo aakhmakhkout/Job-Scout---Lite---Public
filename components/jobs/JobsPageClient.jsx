@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown } from 'lucide-react';
+import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown, Bookmark } from 'lucide-react';
 import JobCard from '@/components/jobs/JobCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { JobCardSkeleton } from '@/components/ui/Skeleton';
@@ -24,6 +24,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   const [role, setRole] = useState('all');
   const [location, setLocation] = useState('all');
   const [remoteOnly, setRemoteOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [page, setPage] = useState(1);
 
@@ -201,7 +202,8 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
       const matchesRole = role === 'all' || job.title === role;
       const matchesLocation = location === 'all' || job.location === location;
       const matchesRemote = !remoteOnly || (job.location || '').toLowerCase().includes('remote');
-      return matchesSearch && matchesRole && matchesLocation && matchesRemote;
+      const matchesSaved = !savedOnly || Boolean(savedByUrl[job.apply_url]);
+      return matchesSearch && matchesRole && matchesLocation && matchesRemote && matchesSaved;
     });
 
     list = [...list].sort((a, b) => {
@@ -210,7 +212,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
     });
 
     return list;
-  }, [visibleJobs, search, role, location, remoteOnly, sortBy]);
+  }, [visibleJobs, search, role, location, remoteOnly, savedOnly, savedByUrl, sortBy]);
 
   const paged = filtered.slice(0, page * PAGE_SIZE);
 
@@ -355,6 +357,26 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
           />
           Remote only
         </label>
+
+        {/* Hidden for admin — admin sessions never have saved jobs (Step
+            25: Save is a personal-tracker action admin doesn't have),
+            so savedByUrl is always empty and this toggle would just
+            always show zero results. */}
+        {!isAdmin && (
+          <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm">
+            <input
+              type="checkbox"
+              checked={savedOnly}
+              onChange={(e) => {
+                setSavedOnly(e.target.checked);
+                setPage(1);
+              }}
+              className="h-4 w-4 rounded border-ink/30 text-brand focus:ring-brand"
+            />
+            <Bookmark className="h-3.5 w-3.5 text-ink-muted dark:text-slate-500" strokeWidth={2} />
+            Saved only
+          </label>
+        )}
 
         <div className="relative shrink-0">
           <ArrowUpDown

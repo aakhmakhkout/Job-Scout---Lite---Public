@@ -1,28 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  Search,
-  Briefcase,
-  MapPin,
-  ArrowUpDown,
-  Clock,
-  ChevronDown,
-  Bookmark,
-  Globe,
-} from "lucide-react";
-import JobCard from "@/components/jobs/JobCard";
-import EmptyState from "@/components/ui/EmptyState";
-import { JobCardSkeleton } from "@/components/ui/Skeleton";
-import { useToast } from "@/components/ui/ToastProvider";
-import BlocklistManager from "@/components/jobs/BlocklistManager";
-import { trustBadgeLabel } from "@/lib/mockData";
+import { useEffect, useMemo, useState } from 'react';
+import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown, Bookmark, Globe } from 'lucide-react';
+import JobCard from '@/components/jobs/JobCard';
+import EmptyState from '@/components/ui/EmptyState';
+import { JobCardSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/ToastProvider';
+import BlocklistManager from '@/components/jobs/BlocklistManager';
+import { trustBadgeLabel } from '@/lib/mockData';
 
 const PAGE_SIZE = 20;
 const FRESH_WINDOW_MS = 24 * 3_600_000; // Step 32 — see the "newest" sort comparator below.
 
-export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
-  const noun = jobType === "Internship" ? "internship" : "job";
+export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
+  const noun = jobType === 'Internship' ? 'internship' : 'job';
   const [allJobs, setAllJobs] = useState([]);
   const [blockedCompanies, setBlockedCompanies] = useState([]);
   const [savedByUrl, setSavedByUrl] = useState({});
@@ -31,17 +22,17 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
   const [loadError, setLoadError] = useState(false);
   const [cacheGeneratedAt, setCacheGeneratedAt] = useState(null);
 
-  const [search, setSearch] = useState("");
-  const [role, setRole] = useState("all");
-  const [location, setLocation] = useState("all");
+  const [search, setSearch] = useState('');
+  const [role, setRole] = useState('all');
+  const [location, setLocation] = useState('all');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [savedOnly, setSavedOnly] = useState(false);
   // Step 33 — English is the default; matches jobs with no language
   // tag too (see the matchesLanguage check below), not just ones
   // explicitly tagged 'en', so legacy/untagged cached jobs don't just
   // vanish from the default view.
-  const [languageFilter, setLanguageFilter] = useState("english");
-  const [sortBy, setSortBy] = useState("newest");
+  const [languageFilter, setLanguageFilter] = useState('english');
+  const [sortBy, setSortBy] = useState('newest');
   const [page, setPage] = useState(1);
 
   const { addToast } = useToast();
@@ -63,8 +54,8 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
         // its own local cache and asks the server directly — this page
         // only fetches once per visit anyway, so there's no real
         // performance cost to doing so.
-        const jobsRes = await fetch("/api/jobs/cache", { cache: "no-store" });
-        if (!jobsRes.ok) throw new Error("Failed to load jobs");
+        const jobsRes = await fetch('/api/jobs/cache', { cache: 'no-store' });
+        if (!jobsRes.ok) throw new Error('Failed to load jobs');
         const jobsData = await jobsRes.json();
         if (cancelled) return;
         setAllJobs(jobsData.jobs || []);
@@ -90,38 +81,31 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
         return;
       }
 
-      const [blocklistRes, savedRes, applicationsRes] =
-        await Promise.allSettled([
-          fetch("/api/blocklist"),
-          fetch("/api/saved-jobs"),
-          fetch("/api/applications"),
-        ]);
+      const [blocklistRes, savedRes, applicationsRes] = await Promise.allSettled([
+        fetch('/api/blocklist'),
+        fetch('/api/saved-jobs'),
+        fetch('/api/applications'),
+      ]);
 
       if (cancelled) return;
 
-      if (blocklistRes.status === "fulfilled" && blocklistRes.value.ok) {
+      if (blocklistRes.status === 'fulfilled' && blocklistRes.value.ok) {
         const data = await blocklistRes.value.json();
         setBlockedCompanies(data.blocked_companies || []);
       } else {
-        addToast(
-          "Couldn't load your blocklist — jobs may show that you've blocked",
-          "warning",
-        );
+        addToast("Couldn't load your blocklist — jobs may show that you've blocked", 'warning');
       }
 
-      if (savedRes.status === "fulfilled" && savedRes.value.ok) {
+      if (savedRes.status === 'fulfilled' && savedRes.value.ok) {
         const data = await savedRes.value.json();
         const map = {};
         for (const s of data.saved_jobs || []) map[s.job_apply_url] = s.id;
         setSavedByUrl(map);
       } else {
-        addToast(
-          "Couldn't load your saved jobs — Save buttons may not reflect saved state",
-          "warning",
-        );
+        addToast("Couldn't load your saved jobs — Save buttons may not reflect saved state", 'warning');
       }
 
-      if (applicationsRes.status === "fulfilled" && applicationsRes.value.ok) {
+      if (applicationsRes.status === 'fulfilled' && applicationsRes.value.ok) {
         const data = await applicationsRes.value.json();
         const map = {};
         for (const a of data.applications || []) {
@@ -129,10 +113,7 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
         }
         setAppliedByUrl(map);
       } else {
-        addToast(
-          "Couldn't load your applications — Mark applied may not reflect tracked state",
-          "warning",
-        );
+        addToast("Couldn't load your applications — Mark applied may not reflect tracked state", 'warning');
       }
 
       setLoading(false);
@@ -147,22 +128,22 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
 
   const blockedNames = useMemo(
     () => new Set(blockedCompanies.map((b) => b.company_name.toLowerCase())),
-    [blockedCompanies],
+    [blockedCompanies]
   );
 
   async function handleBlock(companyName) {
     try {
-      const res = await fetch("/api/blocklist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/blocklist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ company_name: companyName }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to block");
+      if (!res.ok) throw new Error(data.error || 'Failed to block');
       setBlockedCompanies((prev) => [...prev, data.blocked_company]);
       addToast(`Blocked ${companyName}`);
     } catch (e) {
-      addToast(e.message, "warning");
+      addToast(e.message, 'warning');
     }
   }
 
@@ -170,12 +151,12 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
     const prev = blockedCompanies;
     setBlockedCompanies((cur) => cur.filter((b) => b.id !== id));
     try {
-      const res = await fetch(`/api/blocklist/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to unblock");
-      addToast("Company unblocked");
+      const res = await fetch(`/api/blocklist/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to unblock');
+      addToast('Company unblocked');
     } catch (e) {
       setBlockedCompanies(prev);
-      addToast("Could not unblock company", "warning");
+      addToast('Could not unblock company', 'warning');
     }
   }
 
@@ -186,22 +167,20 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
   // right away, not "eventually."
   async function handleAdminRemove(job) {
     try {
-      const res = await fetch("/api/admin/hidden-listings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/admin/hidden-listings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           apply_url: job.apply_url,
           title: job.title,
           company: job.company,
         }),
       });
-      if (!res.ok) throw new Error("Failed to remove");
+      if (!res.ok) throw new Error('Failed to remove');
       setAllJobs((prev) => prev.filter((j) => j.apply_url !== job.apply_url));
-      addToast(
-        "Removed — hidden until the next sync. Undo anytime from Admin → Removed listings.",
-      );
+      addToast('Removed — hidden until the next sync. Undo anytime from Admin → Removed listings.');
     } catch {
-      addToast("Could not remove this listing", "warning");
+      addToast('Could not remove this listing', 'warning');
     }
   }
 
@@ -209,19 +188,16 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
     () =>
       allJobs.filter(
         (job) =>
-          !blockedNames.has((job.company || "").toLowerCase()) &&
-          (job.job_type || "Job") === jobType,
+          !blockedNames.has((job.company || '').toLowerCase()) &&
+          (job.job_type || 'Job') === jobType
       ),
-    [allJobs, blockedNames, jobType],
+    [allJobs, blockedNames, jobType]
   );
 
-  const roles = useMemo(
-    () => ["all", ...new Set(visibleJobs.map((j) => j.title))],
-    [visibleJobs],
-  );
+  const roles = useMemo(() => ['all', ...new Set(visibleJobs.map((j) => j.title))], [visibleJobs]);
   const locations = useMemo(
-    () => ["all", ...new Set(visibleJobs.map((j) => j.location))],
-    [visibleJobs],
+    () => ['all', ...new Set(visibleJobs.map((j) => j.location))],
+    [visibleJobs]
   );
 
   const filtered = useMemo(() => {
@@ -231,29 +207,20 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
         !search ||
         job.title.toLowerCase().includes(search.toLowerCase()) ||
         job.company.toLowerCase().includes(search.toLowerCase());
-      const matchesRole = role === "all" || job.title === role;
-      const matchesLocation = location === "all" || job.location === location;
-      const matchesRemote =
-        !remoteOnly || (job.location || "").toLowerCase().includes("remote");
+      const matchesRole = role === 'all' || job.title === role;
+      const matchesLocation = location === 'all' || job.location === location;
+      const matchesRemote = !remoteOnly || (job.location || '').toLowerCase().includes('remote');
       const matchesSaved = !savedOnly || Boolean(savedByUrl[job.apply_url]);
       // Step 33 — a job with no language tag (older cached data from
       // before this shipped, or an admin-approved job) defaults to
       // 'en' here too, matching the scraper/schema's own default —
       // one fail-open rule, not two that could disagree.
-      const matchesLanguage =
-        languageFilter === "all" || (job.language || "en") === "en";
-      return (
-        matchesSearch &&
-        matchesRole &&
-        matchesLocation &&
-        matchesRemote &&
-        matchesSaved &&
-        matchesLanguage
-      );
+      const matchesLanguage = languageFilter === 'all' || (job.language || 'en') === 'en';
+      return matchesSearch && matchesRole && matchesLocation && matchesRemote && matchesSaved && matchesLanguage;
     });
 
     list = [...list].sort((a, b) => {
-      if (sortBy === "trust") return b.trust_score - a.trust_score;
+      if (sortBy === 'trust') return b.trust_score - a.trust_score;
 
       // Step 32: within the "Newest" sort, jobs posted less than 24h
       // ago get pulled to the top, Trusted first then Unverified —
@@ -271,29 +238,19 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
       const bFresh = now - new Date(b.posted_at).getTime() < FRESH_WINDOW_MS;
       const aTier = trustBadgeLabel(a);
       const bTier = trustBadgeLabel(b);
-      const aBoosted = aFresh && aTier !== "Suspicious";
-      const bBoosted = bFresh && bTier !== "Suspicious";
+      const aBoosted = aFresh && aTier !== 'Suspicious';
+      const bBoosted = bFresh && bTier !== 'Suspicious';
 
       if (aBoosted !== bBoosted) return aBoosted ? -1 : 1;
       if (aBoosted && bBoosted && aTier !== bTier) {
         // Both fresh and boosted, different tiers — Trusted before Unverified.
-        return aTier === "Trusted" ? -1 : 1;
+        return aTier === 'Trusted' ? -1 : 1;
       }
       return new Date(b.posted_at) - new Date(a.posted_at);
     });
 
     return list;
-  }, [
-    visibleJobs,
-    search,
-    role,
-    location,
-    remoteOnly,
-    savedOnly,
-    savedByUrl,
-    languageFilter,
-    sortBy,
-  ]);
+  }, [visibleJobs, search, role, location, remoteOnly, savedOnly, savedByUrl, languageFilter, sortBy]);
 
   const paged = filtered.slice(0, page * PAGE_SIZE);
 
@@ -331,14 +288,12 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
   // just mean none of your current sources have open internships right
   // now. Check scraper/logs/scraper.log for the "job type breakdown"
   // line to see the real counts.
-  const totalOfThisType = allJobs.filter(
-    (j) => (j.job_type || "Job") === jobType,
-  ).length;
+  const totalOfThisType = allJobs.filter((j) => (j.job_type || 'Job') === jobType).length;
   if (totalOfThisType === 0) {
     return (
       <EmptyState
         title={`No ${noun}s in the cache`}
-        description={`The cache has ${allJobs.length} job${allJobs.length === 1 ? "" : "s"} total, but none are classified as ${noun}s right now. Check scraper/logs/scraper.log for the "job type breakdown" line to confirm — this could mean your current sources just don't have open ${noun}s at the moment, not a bug.`}
+        description={`The cache has ${allJobs.length} job${allJobs.length === 1 ? '' : 's'} total, but none are classified as ${noun}s right now. Check scraper/logs/scraper.log for the "job type breakdown" line to confirm — this could mean your current sources just don't have open ${noun}s at the moment, not a bug.`}
       />
     );
   }
@@ -348,12 +303,12 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
       {cacheGeneratedAt && (
         <p className="mb-3 flex items-center gap-1.5 text-xs text-ink-muted dark:text-slate-400">
           <Clock className="h-3.5 w-3.5" strokeWidth={2} />
-          Cache last updated{" "}
-          {new Date(cacheGeneratedAt).toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
+          Cache last updated{' '}
+          {new Date(cacheGeneratedAt).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
           })}
         </p>
       )}
@@ -401,7 +356,7 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
           >
             {roles.map((r) => (
               <option key={r} value={r}>
-                {r === "all" ? "All roles" : r}
+                {r === 'all' ? 'All roles' : r}
               </option>
             ))}
           </select>
@@ -422,7 +377,7 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
           >
             {locations.map((l) => (
               <option key={l} value={l}>
-                {l === "all" ? "All locations" : l}
+                {l === 'all' ? 'All locations' : l}
               </option>
             ))}
           </select>
@@ -474,10 +429,7 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
               }}
               className="h-4 w-4 rounded border-ink/30 text-brand focus:ring-brand"
             />
-            <Bookmark
-              className="h-3.5 w-3.5 text-ink-muted dark:text-slate-500"
-              strokeWidth={2}
-            />
+            <Bookmark className="h-3.5 w-3.5 text-ink-muted dark:text-slate-500" strokeWidth={2} />
             Saved only
           </label>
         )}
@@ -500,7 +452,7 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
 
       <p className="mt-4 text-xs text-ink-muted dark:text-slate-400">
         {filtered.length} {noun}
-        {filtered.length === 1 ? "" : "s"} found
+        {filtered.length === 1 ? '' : 's'} found
       </p>
 
       {paged.length === 0 ? (
@@ -510,7 +462,7 @@ export default function JobsPageClient({ jobType = "Job", isAdmin = false }) {
             description={
               visibleJobs.length === 0
                 ? `No ${noun}s in the cache right now — check back after the next scraper sync.`
-                : "Try widening your search, clearing a filter, or checking back after the next sync."
+                : 'Try widening your search, clearing a filter, or checking back after the next sync.'
             }
           />
         </div>

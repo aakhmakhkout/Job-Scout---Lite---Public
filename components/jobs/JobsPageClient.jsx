@@ -12,6 +12,13 @@ import { trustBadgeLabel } from '@/lib/mockData';
 const PAGE_SIZE = 20;
 const FRESH_WINDOW_MS = 24 * 3_600_000; // Step 32 — see the "newest" sort comparator below.
 
+// Step 35 — which tiers get the "newest" freshness boost, and in what
+// order among themselves. Only tiers with no real negative signal are
+// present here; Red Flag/Suspicious are absent on purpose, which is
+// exactly what TIER_BOOST_RANK[tier] === undefined is checking for
+// below, not a separate exclusion list to keep in sync.
+const TIER_BOOST_RANK = { 'Highly Trusted': 0, Trusted: 1, Unverified: 2 };
+
 export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   const noun = jobType === 'Internship' ? 'internship' : 'job';
   const [allJobs, setAllJobs] = useState([]);
@@ -223,28 +230,34 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
       if (sortBy === 'trust') return b.trust_score - a.trust_score;
 
       // Step 32: within the "Newest" sort, jobs posted less than 24h
-      // ago get pulled to the top, Trusted first then Unverified —
-      // fresh jobs are disproportionately Unverified simply because
-      // nothing's had time to be double-checked yet (no salary listed,
-      // no recency bonus expired), which was burying the small number
-      // of genuinely Trusted-fresh jobs under a wall of Unverified
-      // ones and hurting the browsing experience. Suspicious jobs are
-      // deliberately excluded from this boost — surfacing a job with
-      // an actual negative signal just because it's fresh would work
+      // ago get pulled to the top, strongest tier first — fresh jobs
+      // are disproportionately Unverified simply because nothing's had
+      // time to be double-checked yet (no salary listed, no recency
+      // bonus expired), which was burying the small number of
+      // genuinely Trusted-fresh jobs under a wall of Unverified ones
+      // and hurting the browsing experience. Tiers with a real negative
+      // signal are deliberately excluded from this boost — surfacing a
+      // job with an actual red flag just because it's fresh would work
       // against the trust score's entire purpose. Everything outside
-      // this boosted group (older than 24h, or Suspicious regardless
-      // of age) falls back to plain newest-first, same as before.
+      // this boosted group (older than 24h, or Red Flag/Suspicious
+      // regardless of age) falls back to plain newest-first, same as
+      // before.
+      //
+      // Step 35: now 3 boostable tiers instead of 2 (Highly Trusted was
+      // added above Trusted), and 2 excluded tiers instead of 1 (Red
+      // Flag joins Suspicious as a real-negative-signal tier) — see
+      // TIER_BOOST_RANK below for the ordering among boosted tiers.
       const aFresh = now - new Date(a.posted_at).getTime() < FRESH_WINDOW_MS;
       const bFresh = now - new Date(b.posted_at).getTime() < FRESH_WINDOW_MS;
       const aTier = trustBadgeLabel(a);
       const bTier = trustBadgeLabel(b);
-      const aBoosted = aFresh && aTier !== 'Suspicious';
-      const bBoosted = bFresh && bTier !== 'Suspicious';
+      const aBoosted = aFresh && TIER_BOOST_RANK[aTier] !== undefined;
+      const bBoosted = bFresh && TIER_BOOST_RANK[bTier] !== undefined;
 
       if (aBoosted !== bBoosted) return aBoosted ? -1 : 1;
       if (aBoosted && bBoosted && aTier !== bTier) {
-        // Both fresh and boosted, different tiers — Trusted before Unverified.
-        return aTier === 'Trusted' ? -1 : 1;
+        // Both fresh and boosted, different tiers — strongest first.
+        return TIER_BOOST_RANK[aTier] - TIER_BOOST_RANK[bTier];
       }
       return new Date(b.posted_at) - new Date(a.posted_at);
     });

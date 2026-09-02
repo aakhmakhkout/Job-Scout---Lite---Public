@@ -46,6 +46,14 @@ module.exports = {
         // still means something unrelated elsewhere (admin import
         // status, application status badges, etc.) and must not change.
         unverified: '#C79A2B',
+        // Step 35 — the 3-tier system became 5 tiers (a new top
+        // "Highly Trusted" band for recognized brands, and the old
+        // catch-all under-50 bucket split into "Red Flag"/"Suspicious").
+        // Two new distinct tokens, not reused from the existing
+        // green/amber/red spectrum, so all 5 tiers stay visually
+        // distinguishable from each other at a glance.
+        'highly-trusted': '#5B3FA0', // deep purple — deliberately outside the trust/red spectrum, reads as "premium/verified," not just "more green than trusted"
+        'red-flag': '#D2691E', // burnt orange — sits visually between unverified-amber and suspicious-red, matching its position between those two tiers
       },
       fontFamily: {
         display: ['var(--font-display)', 'ui-sans-serif', 'system-ui'],

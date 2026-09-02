@@ -3,11 +3,18 @@
 // computeMarketSnapshot() — wired to real data as of Step 17 (was mock
 // in Steps 15/16). Tier boundaries match lib/mockData.js's
 // trustBadgeLabel/Color so this agrees with every job card's own badge.
+//
+// Step 35 — 5 tiers now (was 3), ordered strongest to weakest so both
+// the bar segments and the legend below read left-to-right / top-to-
+// bottom as "most to least trustworthy," same ordering convention as
+// every trust-tier list elsewhere in the app.
 import { ShieldCheck } from 'lucide-react';
 
 const TIERS = [
+  { key: 'highlyTrusted', label: 'Highly Trusted', color: 'bg-highly-trusted' },
   { key: 'trusted', label: 'Trusted', color: 'bg-trusted' },
   { key: 'unverified', label: 'Unverified', color: 'bg-unverified' },
+  { key: 'redFlag', label: 'Red Flag', color: 'bg-red-flag' },
   { key: 'suspicious', label: 'Suspicious', color: 'bg-suspicious' },
 ];
 
@@ -41,7 +48,12 @@ export default function MarketSnapshotChart({ data }) {
         })}
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      {/* 5 tiers now, not 3 — grid-cols-3 leaves one empty cell in the
+          second row (5 doesn't divide evenly into 3), same minor,
+          accepted cosmetic trade-off already established elsewhere in
+          this app (e.g. Step 26's widget-hiding note) rather than
+          building a dynamic column-count system for a 5-item legend. */}
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {TIERS.map((tier) => (
           <div key={tier.key} className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tier.color}`} />

@@ -118,7 +118,7 @@ export default async function DashboardPage() {
           {showStatTrusted && (
             <StatCard
               label="Trusted jobs"
-              value={marketSnapshot.trusted}
+              value={marketSnapshot.trusted + marketSnapshot.highlyTrusted}
               hint="Score 70+"
               icon={ShieldCheck}
               accent="trusted"

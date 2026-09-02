@@ -12,10 +12,10 @@ import { ShieldCheck } from 'lucide-react';
 
 const TIERS = [
   { key: 'highlyTrusted', label: 'Highly Trusted', color: 'bg-highly-trusted' },
-  { key: 'trusted', label: 'Trusted', color: 'bg-trusted' },
+  { key: 'trusted', label: 'Trusted', color: 'bg-tier-trusted' },
   { key: 'unverified', label: 'Unverified', color: 'bg-unverified' },
   { key: 'redFlag', label: 'Red Flag', color: 'bg-red-flag' },
-  { key: 'suspicious', label: 'Suspicious', color: 'bg-suspicious' },
+  { key: 'suspicious', label: 'Suspicious', color: 'bg-tier-suspicious' },
 ];
 
 export default function MarketSnapshotChart({ data }) {

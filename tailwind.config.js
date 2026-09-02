@@ -45,15 +45,40 @@ module.exports = {
         // so trust-tier components aren't coupled to "review", which
         // still means something unrelated elsewhere (admin import
         // status, application status badges, etc.) and must not change.
-        unverified: '#C79A2B',
+        //
+        // Step 37 — recolored per direct request. Changed from amber
+        // to a neutral gray: "unverified" means "nothing confirmed
+        // either way," which a gray/neutral tone reads as more
+        // accurately than amber (amber implies an active caution,
+        // which isn't what this tier is).
+        unverified: '#6B7280',
         // Step 35 — the 3-tier system became 5 tiers (a new top
         // "Highly Trusted" band for recognized brands, and the old
         // catch-all under-50 bucket split into "Red Flag"/"Suspicious").
-        // Two new distinct tokens, not reused from the existing
-        // green/amber/red spectrum, so all 5 tiers stay visually
-        // distinguishable from each other at a glance.
-        'highly-trusted': '#5B3FA0', // deep purple — deliberately outside the trust/red spectrum, reads as "premium/verified," not just "more green than trusted"
-        'red-flag': '#D2691E', // burnt orange — sits visually between unverified-amber and suspicious-red, matching its position between those two tiers
+        //
+        // Step 37 — recolored per direct request:
+        //   Highly Trusted -> deep green (was purple)
+        //   Red Flag       -> red (was burnt orange)
+        // "highly-trusted" and "red-flag" are dedicated trust-tier-only
+        // tokens (see the grep-confirmed usage note below), safe to
+        // recolor in place with no risk of an unrelated part of the
+        // app changing color alongside them.
+        'highly-trusted': '#14532D',
+        'red-flag': '#DC2626',
+        // Step 37 — "trusted" (green) and "suspicious" (red) were the
+        // two tiers whose requested colors could NOT just reuse the
+        // app-wide `trusted`/`suspicious` tokens above: both of those
+        // are heavily reused elsewhere for unrelated meanings — e app-
+        // wide `trusted` also colors "approved" import status, "Offer"
+        // application status, active-user badges, and every StatCard
+        // accent; `suspicious` is this app's de-facto error/destructive
+        // red, used on every auth form's error message, "Delete
+        // account," "Reject," and more. Recoloring the shared tokens
+        // to match this request would have silently recolored all of
+        // that too. Two new tier-only tokens instead, decoupled from
+        // both:
+        'tier-trusted': '#2E8B57', // green — same value as the shared "trusted" token today, but on its own token so a future restyle of "approved/active" elsewhere in the app can't silently drag the trust-tier badge along with it
+        'tier-suspicious': '#D97706', // orange/yellow, per request — deliberately NOT the same red as the shared "suspicious" token, which stays the app's error/destructive color everywhere else
       },
       fontFamily: {
         display: ['var(--font-display)', 'ui-sans-serif', 'system-ui'],

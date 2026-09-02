@@ -1,13 +1,20 @@
 import { trustBadgeLabel, trustBadgeColor } from '@/lib/mockData';
 
 // Step 35 — two new entries for the 5-tier system (highly-trusted /
-// red-flag), same purple/burnt-orange tokens added to tailwind.config.js.
+// red-flag).
+// Step 37 — recolored per direct request: deep green for Highly
+// Trusted, green for Trusted, gray for Unverified, orange/yellow for
+// Suspicious, red for Red Flag. "trusted" and "suspicious" use the new
+// tier-only tokens (tier-trusted/tier-suspicious) rather than the
+// shared app-wide "trusted"/"suspicious" tokens — see
+// tailwind.config.js for why those two specifically needed dedicated
+// tokens instead of just being recolored in place.
 const COLOR_MAP = {
-  'highly-trusted': { ring: '#5B3FA0', text: 'text-highly-trusted' },
-  trusted: { ring: '#2E8B57', text: 'text-trusted' },
-  unverified: { ring: '#C79A2B', text: 'text-unverified' },
-  'red-flag': { ring: '#D2691E', text: 'text-red-flag' },
-  suspicious: { ring: '#C7362B', text: 'text-suspicious' },
+  'highly-trusted': { ring: '#14532D', text: 'text-highly-trusted' },
+  trusted: { ring: '#2E8B57', text: 'text-tier-trusted' },
+  unverified: { ring: '#6B7280', text: 'text-unverified' },
+  'red-flag': { ring: '#DC2626', text: 'text-red-flag' },
+  suspicious: { ring: '#D97706', text: 'text-tier-suspicious' },
 };
 
 // A small radial gauge — the needle/fill reads at a glance like an

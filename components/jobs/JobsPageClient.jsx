@@ -13,10 +13,18 @@ const PAGE_SIZE = 20;
 const FRESH_WINDOW_MS = 24 * 3_600_000; // Step 32 — see the "newest" sort comparator below.
 
 // Step 35 — which tiers get the "newest" freshness boost, and in what
-// order among themselves. Only tiers with no real negative signal are
-// present here; Red Flag/Suspicious are absent on purpose, which is
-// exactly what TIER_BOOST_RANK[tier] === undefined is checking for
-// below, not a separate exclusion list to keep in sync.
+// order among themselves. Highly Trusted/Trusted/Unverified only;
+// Red Flag/Suspicious are absent on purpose, which is exactly what
+// TIER_BOOST_RANK[tier] === undefined is checking for below, not a
+// separate exclusion list to keep in sync.
+//
+// Step 39 — still correct after Red Flag/Suspicious's meanings
+// inverted: Red Flag now means an actual negative signal fired (still
+// an easy exclude), and Suspicious now means "clean, but the least
+// verified of the clean tiers" (structurally below Unverified in the
+// hierarchy either way) — so both stay excluded from a boost meant to
+// surface the most-verified fresh jobs, just for a different reason
+// than before on Suspicious's side.
 const TIER_BOOST_RANK = { 'Highly Trusted': 0, Trusted: 1, Unverified: 2 };
 
 export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {

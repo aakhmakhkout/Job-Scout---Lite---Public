@@ -9,10 +9,13 @@ import { trustBadgeLabel, trustBadgeColor } from '@/lib/mockData';
 // shared app-wide "trusted"/"suspicious" tokens — see
 // tailwind.config.js for why those two specifically needed dedicated
 // tokens instead of just being recolored in place.
+// Step 38 — swapped per direct request: Highly Trusted is now the
+// (lighter) green, Trusted is now the deep green; Unverified's gray
+// lightened one step toward white.
 const COLOR_MAP = {
-  'highly-trusted': { ring: '#14532D', text: 'text-highly-trusted' },
-  trusted: { ring: '#2E8B57', text: 'text-tier-trusted' },
-  unverified: { ring: '#6B7280', text: 'text-unverified' },
+  'highly-trusted': { ring: '#2E8B57', text: 'text-highly-trusted' },
+  trusted: { ring: '#14532D', text: 'text-tier-trusted' },
+  unverified: { ring: '#9CA3AF', text: 'text-unverified' },
   'red-flag': { ring: '#DC2626', text: 'text-red-flag' },
   suspicious: { ring: '#D97706', text: 'text-tier-suspicious' },
 };

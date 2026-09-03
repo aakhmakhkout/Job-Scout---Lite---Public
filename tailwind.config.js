@@ -51,7 +51,12 @@ module.exports = {
         // either way," which a gray/neutral tone reads as more
         // accurately than amber (amber implies an active caution,
         // which isn't what this tier is).
-        unverified: '#6B7280',
+        //
+        // Step 38 — lightened further per direct request ("more white
+        // side"): #6B7280 (tailwind gray-500) -> #9CA3AF (gray-400),
+        // one step lighter/more neutral while still readable as text
+        // on both light and dark card backgrounds.
+        unverified: '#9CA3AF',
         // Step 35 — the 3-tier system became 5 tiers (a new top
         // "Highly Trusted" band for recognized brands, and the old
         // catch-all under-50 bucket split into "Red Flag"/"Suspicious").
@@ -63,7 +68,12 @@ module.exports = {
         // tokens (see the grep-confirmed usage note below), safe to
         // recolor in place with no risk of an unrelated part of the
         // app changing color alongside them.
-        'highly-trusted': '#14532D',
+        //
+        // Step 38 — swapped per direct request: Highly Trusted is now
+        // the (lighter/brighter) green, and Trusted below it is now
+        // the deep green — see "tier-trusted" below, same swap applied
+        // there since that's the token Trusted's badge actually uses.
+        'highly-trusted': '#2E8B57',
         'red-flag': '#DC2626',
         // Step 37 — "trusted" (green) and "suspicious" (red) were the
         // two tiers whose requested colors could NOT just reuse the
@@ -77,7 +87,7 @@ module.exports = {
         // to match this request would have silently recolored all of
         // that too. Two new tier-only tokens instead, decoupled from
         // both:
-        'tier-trusted': '#2E8B57', // green — same value as the shared "trusted" token today, but on its own token so a future restyle of "approved/active" elsewhere in the app can't silently drag the trust-tier badge along with it
+        'tier-trusted': '#14532D', // deep green — Step 38 swap: was the "highly-trusted" value, now Trusted's, per direct request
         'tier-suspicious': '#D97706', // orange/yellow, per request — deliberately NOT the same red as the shared "suspicious" token, which stays the app's error/destructive color everywhere else
       },
       fontFamily: {

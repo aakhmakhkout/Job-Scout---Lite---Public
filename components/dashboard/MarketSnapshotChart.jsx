@@ -8,14 +8,20 @@
 // the bar segments and the legend below read left-to-right / top-to-
 // bottom as "most to least trustworthy," same ordering convention as
 // every trust-tier list elsewhere in the app.
+//
+// Step 39 — Suspicious and Red Flag swapped positions here to match
+// their new, inverted meanings: Suspicious is now the milder "clean,
+// but not enough could be verified" case, and Red Flag is now
+// reserved for "a real negative signal actually fired" — see
+// scraper/trust_scoring.py's module docstring for the full reasoning.
 import { ShieldCheck } from 'lucide-react';
 
 const TIERS = [
   { key: 'highlyTrusted', label: 'Highly Trusted', color: 'bg-highly-trusted' },
   { key: 'trusted', label: 'Trusted', color: 'bg-tier-trusted' },
   { key: 'unverified', label: 'Unverified', color: 'bg-unverified' },
-  { key: 'redFlag', label: 'Red Flag', color: 'bg-red-flag' },
   { key: 'suspicious', label: 'Suspicious', color: 'bg-tier-suspicious' },
+  { key: 'redFlag', label: 'Red Flag', color: 'bg-red-flag' },
 ];
 
 export default function MarketSnapshotChart({ data }) {

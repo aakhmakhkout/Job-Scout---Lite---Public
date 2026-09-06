@@ -11,6 +11,7 @@ import { RESOURCE_CATEGORIES } from '@/lib/resourceCategories';
 import { getWidgetSettings } from '@/lib/dashboardWidgets';
 import { getResourceItemsByCategory } from '@/lib/resourceItems';
 import { getViewer } from '@/lib/viewer';
+import { getAppVersion } from '@/lib/appVersion';
 
 function formatSyncTime(iso) {
   if (!iso) return 'never — run the scraper';
@@ -109,7 +110,11 @@ export default async function DashboardPage() {
   const showResourcesSection = visibleResourceCategories.length > 0 || showInterviewPrep;
 
   return (
-    <AppShell title="Dashboard" subtitle={`Last scraper sync: ${formatSyncTime(cache.generated_at)}`} icon={LayoutDashboard}>
+    <AppShell
+      title="Dashboard"
+      subtitle={`Last scraper sync: ${formatSyncTime(cache.generated_at)} · ${getAppVersion()}`}
+      icon={LayoutDashboard}
+    >
       {anyStatVisible && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {showStatNewJobs && (

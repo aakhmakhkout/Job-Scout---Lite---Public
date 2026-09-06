@@ -1,30 +1,33 @@
-# ── Build artifacts & OS junk ────────────────────────────────────────
+# === Build artifacts / OS junk ===
 node_modules/
 .next/
 out/
-.DS_Store
+build/
 *.log
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.venv/
+venv/
 
-# ── Secrets — never commit, anywhere, ever ───────────────────────────
+# === Secrets (never commit) ===
 .env
 .env.local
+scraper/.env
 supabase/admin_seed.sql
 
-# ── Scraper-generated / local data (not source, regenerate anytime) ──
-cache/jobs.json
+# === Scraper-generated local data ===
 scraper/jobs.db
-scraper/venv/
-scraper/__pycache__/
-scraper/sources/__pycache__/
-scraper/logs/*.log
+scraper/logs/
+cache/jobs.json
 
-# ── Working docs for you + Claude — never pushed to either repo ──────
-# (build history, architecture notes, env var reference — useful for
-# resuming work with Claude, not meant for git at all)
+# === Working docs for you + Claude (not needed by an outside contributor) ===
 PROGRESS.md
 updates.md
 personal.md
 .env.local.example
+
 
 
 scraper/
@@ -32,7 +35,6 @@ supabase/
 lib/adminAuth/
 lib/rateLimit.js
 lib/adminImport/
-lib/adminUsers.js
 middleware.js
 app/api/
 app/admin/

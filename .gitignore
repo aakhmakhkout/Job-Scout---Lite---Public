@@ -29,6 +29,7 @@ personal.md
 .env.local.example
 
 
+
 scraper/
 supabase/
 lib/adminAuth/

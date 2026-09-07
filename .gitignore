@@ -29,12 +29,13 @@ personal.md
 .env.local.example
 
 
-
 scraper/
 supabase/
 lib/adminAuth/
 lib/rateLimit.js
 lib/adminImport/
+lib/resumeParsing.js
+lib/skillsDictionary.js
 middleware.js
 app/api/
 app/admin/

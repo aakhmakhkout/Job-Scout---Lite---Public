@@ -5,6 +5,7 @@ import Link from 'next/link';
 import RecoveryKeyDisplay from './RecoveryKeyDisplay';
 import DeleteAccountModal from './DeleteAccountModal';
 import InactivityNotice from './InactivityNotice';
+import ResumeUploadCard from './ResumeUploadCard';
 import { useToast } from '@/components/ui/ToastProvider';
 
 export default function ProfilePageClient({ userEmail, daysInactive }) {
@@ -99,6 +100,8 @@ export default function ProfilePageClient({ userEmail, daysInactive }) {
           </button>
         )}
       </div>
+
+      <ResumeUploadCard />
 
       <div className="rounded-card border border-suspicious/30 bg-white p-5 dark:border-suspicious/40 dark:bg-slate-800">
         <h2 className="text-sm font-semibold text-suspicious">Danger zone</h2>

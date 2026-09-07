@@ -7,7 +7,7 @@ import ResourceCategoryBox from '@/components/dashboard/ResourceCategoryBox';
 import ComingSoonBox from '@/components/dashboard/ComingSoonBox';
 import { getJobsCache } from '@/lib/jobsCache';
 import { computeMarketSnapshot, computeTopCompanies } from '@/lib/dashboardStats';
-import { RESOURCE_CATEGORIES } from '@/lib/resourceCategories';
+import { getResourceCategories } from '@/lib/resourceCategories';
 import { getWidgetSettings } from '@/lib/dashboardWidgets';
 import { getResourceItemsByCategory } from '@/lib/resourceItems';
 import { getViewer } from '@/lib/viewer';
@@ -26,6 +26,15 @@ function formatSyncTime(iso) {
 export default async function DashboardPage() {
   const viewer = await getViewer();
   const isAdmin = viewer.kind === 'admin';
+
+  // Update 46: which resource categories even exist is admin-managed
+  // now (see lib/resourceCategories.js), so this has to be fetched
+  // before the items query below it can know which category keys to
+  // group by. getResourceCategories() already fails open internally
+  // (falls back to the original two categories on error), so awaiting
+  // it up front can't itself cause the page to show less than before.
+  const categories = await getResourceCategories(viewer.supabase);
+  const categoryKeys = categories.map((c) => c.key);
 
   // Applied/Interview counts come from the `applications` table, which
   // only has rows for real Supabase Auth users — an admin session has
@@ -59,7 +68,7 @@ export default async function DashboardPage() {
       // admin-managed via /admin/resources instead of hardcoded.
       // Also fails open internally (all categories degrade to empty,
       // which ResourceCategoryBox already renders as Coming-soon).
-      getResourceItemsByCategory(viewer.supabase),
+      getResourceItemsByCategory(viewer.supabase, categoryKeys),
     ]);
 
   const cache =
@@ -104,9 +113,13 @@ export default async function DashboardPage() {
 
   const showInterviewPrep = isVisible('interview_prep');
   const interviewPrepCopy = widgets.interview_prep || {};
-  const visibleResourceCategories = RESOURCE_CATEGORIES.filter((c) =>
-    isVisible(`resource_${c.key}`)
-  );
+  // A category with no matching row in `dashboard_widgets` (true for
+  // every category by default, and always true for one just added via
+  // Update 46's admin UI) correctly falls through to `visible: true`
+  // here — isVisible() treats "no override on record" as visible, not
+  // hidden, so a brand-new category shows up immediately without
+  // needing a matching widgets-table row created for it first.
+  const visibleResourceCategories = categories.filter((c) => isVisible(`resource_${c.key}`));
   const showResourcesSection = visibleResourceCategories.length > 0 || showInterviewPrep;
 
   return (

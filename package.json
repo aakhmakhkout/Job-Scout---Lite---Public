@@ -1,6 +1,6 @@
 {
   "name": "jobscout-lite",
-  "version": "5.8.48",
+  "version": "5.9.49",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -16,7 +16,8 @@
     "@supabase/supabase-js": "^2.45.4",
     "lucide-react": "^0.400.0",
     "pdf-parse": "^1.1.1",
-    "mammoth": "^1.8.0"
+    "mammoth": "^1.8.0",
+    "adm-zip": "^0.5.16"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",

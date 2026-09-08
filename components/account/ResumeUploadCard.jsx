@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileUp, X, RefreshCw } from 'lucide-react';
+import { FileUp, X, RefreshCw, Check, AlertTriangle, Minus } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastProvider';
 
 // Update 47 — Resume Intelligence, step 1. This card lives on
@@ -10,6 +10,107 @@ import { useToast } from '@/components/ui/ToastProvider';
 // onboarding, and step 7 gives it a proper full-width home on the
 // Dashboard itself. This is deliberately just "upload it, see what we
 // found" for now, nothing more.
+//
+// Update 49 added the "Formatting checks" section below — step 2 of
+// the roadmap. These are raw findings, shown plainly (a checkmark, a
+// warning, or "not checked for this file type") — NOT yet a polished
+// score or a tips list. That's step 4's job, once section-order
+// scoring (step 3) exists too and there's enough to actually combine
+// into one real report.
+
+function CheckRow({ ok, label, detail }) {
+  const Icon = ok === null ? Minus : ok ? Check : AlertTriangle;
+  const color =
+    ok === null
+      ? 'text-ink-muted dark:text-slate-500'
+      : ok
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-amber-600 dark:text-amber-400';
+  return (
+    <div className="flex items-start gap-2 py-1">
+      <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${color}`} strokeWidth={2.5} />
+      <div>
+        <span className="text-xs font-medium">{label}</span>
+        {detail && <span className="ml-1 text-xs text-ink-muted dark:text-slate-400">{detail}</span>}
+      </div>
+    </div>
+  );
+}
+
+function AtsChecksSummary({ checks }) {
+  if (!checks) return null;
+  const { wordCount, sections, contactInfo, bullets, structure } = checks;
+
+  return (
+    <div className="mt-4 border-t border-ink/10 pt-3 dark:border-white/10">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
+        Formatting checks
+      </p>
+      <p className="mt-1 text-xs text-ink-muted dark:text-slate-400">
+        Raw findings, not a score yet — that's coming once section-order checks (next update) give
+        us enough to combine into one real report.
+      </p>
+
+      <div className="mt-2 grid gap-x-4 sm:grid-cols-2">
+        <CheckRow
+          ok={wordCount.status === 'ok'}
+          label={`${wordCount.count} words`}
+          detail={
+            wordCount.status === 'too-short'
+              ? '— on the short side for most resumes'
+              : wordCount.status === 'too-long'
+                ? '— quite long; consider trimming'
+                : ''
+          }
+        />
+        <CheckRow ok={contactInfo.hasEmail} label="Email address found" />
+        <CheckRow ok={contactInfo.hasPhone} label="Phone number found" />
+        <CheckRow
+          ok={bullets.total > 0 ? bullets.actionVerbCount / bullets.total >= 0.6 : null}
+          label={
+            bullets.total > 0
+              ? `${bullets.actionVerbCount} of ${bullets.total} bullets start with a strong action verb`
+              : 'No bullet points detected'
+          }
+        />
+        <CheckRow ok={sections.hasSummary} label="Summary / objective section" />
+        <CheckRow ok={sections.hasSkills} label="Skills section" />
+        <CheckRow ok={sections.hasExperience} label="Experience section" />
+        <CheckRow ok={sections.hasEducation} label="Education section" />
+
+        {structure.checked ? (
+          <>
+            <CheckRow
+              ok={!structure.hasTables}
+              label={structure.hasTables ? 'Uses tables' : 'No tables'}
+              detail={structure.hasTables ? '— some ATS parsers misread table content' : ''}
+            />
+            <CheckRow
+              ok={!structure.hasTextBoxes}
+              label={structure.hasTextBoxes ? 'Uses text boxes' : 'No text boxes'}
+              detail={structure.hasTextBoxes ? '— content inside these is often invisible to an ATS' : ''}
+            />
+            <CheckRow
+              ok={!structure.hasImages}
+              label={structure.hasImages ? 'Contains an image' : 'No images'}
+            />
+          </>
+        ) : (
+          <CheckRow
+            ok={null}
+            label="Table/image/text-box checks"
+            detail={
+              structure.pageCount
+                ? `not available for PDF yet — ${structure.pageCount} page${structure.pageCount === 1 ? '' : 's'} detected`
+                : 'not available for PDF yet'
+            }
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ResumeUploadCard() {
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -143,6 +244,8 @@ export default function ResumeUploadCard() {
                     of keyword matching, not necessarily your resume.
                   </p>
                 )}
+
+                <AtsChecksSummary checks={resume.ats_checks} />
 
                 <button
                   type="button"

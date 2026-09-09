@@ -24,6 +24,60 @@ import { useToast } from '@/components/ui/ToastProvider';
 // looks for headers as anchors. This is about what's easiest for a
 // human skimming quickly, not a parsing requirement — so it's shown
 // as a suggestion, not a pass/fail.
+//
+// Update 52 added the actual headline: a 0–100 score and a priority-
+// ordered tips list (lib/resumeScore.js), combining steps 2 and 3 into
+// something that reads like a real report instead of a checklist. The
+// detailed pass/fail breakdown below it still exists — the score is a
+// summary of it, not a replacement for it.
+
+function ScoreReport({ report }) {
+  if (!report || report.score === null) return null;
+  const { score, label, tips } = report;
+
+  const scoreColor =
+    score >= 90
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : score >= 75
+        ? 'text-brand dark:text-brand-light'
+        : score >= 60
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-suspicious';
+
+  return (
+    <div className="mt-3 rounded-md border border-ink/10 bg-ink/[0.02] p-3 dark:border-white/10 dark:bg-white/[0.02]">
+      <div className="flex items-center gap-3">
+        <div className={`text-3xl font-bold leading-none ${scoreColor}`}>{score}</div>
+        <div>
+          <p className="text-sm font-semibold">{label}</p>
+          <p className="text-xs text-ink-muted dark:text-slate-400">Resume score, out of 100</p>
+        </div>
+      </div>
+
+      {tips.length > 0 ? (
+        <div className="mt-3 space-y-1.5 border-t border-ink/10 pt-3 dark:border-white/10">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
+            Tips, most impactful first
+          </p>
+          {tips.map((tip) => (
+            <div key={tip} className="flex items-start gap-1.5 text-xs">
+              <AlertTriangle
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
+                strokeWidth={2.5}
+              />
+              <span>{tip}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 flex items-center gap-1.5 border-t border-ink/10 pt-3 text-xs text-emerald-600 dark:border-white/10 dark:text-emerald-400">
+          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+          Nothing major to flag — nice work.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function CheckRow({ ok, label, detail }) {
   const Icon = ok === null ? Minus : ok ? Check : AlertTriangle;
@@ -108,8 +162,7 @@ function AtsChecksSummary({ checks }) {
         Formatting checks
       </p>
       <p className="mt-1 text-xs text-ink-muted dark:text-slate-400">
-        Raw findings, not a score yet — that's coming once there's enough combined here to turn
-        into one real report.
+        The detail behind the score above — every individual check, shown plainly.
       </p>
 
       <div className="mt-2 grid gap-x-4 sm:grid-cols-2">
@@ -214,12 +267,13 @@ export default function ResumeUploadCard() {
       const data = await res.json();
       if (!res.ok || !data.resume) throw new Error(data.error || 'Failed to upload resume');
       setResume(data.resume);
+      const scoreNote = data.resume.report?.score != null ? ` — scored ${data.resume.report.score}/100` : '';
       addToast(
         data.resume.extracted_skills.length > 0
-          ? `Resume uploaded — found ${data.resume.extracted_skills.length} skill${
+          ? `Resume uploaded${scoreNote} — found ${data.resume.extracted_skills.length} skill${
               data.resume.extracted_skills.length === 1 ? '' : 's'
             }`
-          : "Resume uploaded — didn't recognize any skills from our list, but it's saved"
+          : `Resume uploaded${scoreNote} — didn't recognize any skills from our list, but it's saved`
       );
     } catch (err) {
       addToast(err.message || 'Could not upload resume', 'warning');
@@ -246,10 +300,9 @@ export default function ResumeUploadCard() {
     <div className="rounded-card border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-slate-800">
       <h2 className="text-sm font-semibold">Resume</h2>
       <p className="mt-1 text-sm text-ink-muted dark:text-slate-400">
-        Upload a PDF or DOCX and we'll pull out the skills we recognize and check its formatting
-        — no AI involved, just keyword matching and structural checks against a curated list. An
-        overall score with real tips, and matching you to jobs based on your skills, are coming
-        in later updates.
+        Upload a PDF or DOCX and we'll score it, check its formatting, and pull out the skills we
+        recognize — no AI involved, just rule-based checks and keyword matching against a
+        curated list. Matching you to jobs based on your skills is coming in a later update.
       </p>
 
       <input
@@ -289,6 +342,8 @@ export default function ResumeUploadCard() {
                     Remove
                   </button>
                 </div>
+
+                <ScoreReport report={resume.report} />
 
                 {resume.extracted_skills.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-1.5">

@@ -1,6 +1,6 @@
 {
   "name": "jobscout-lite",
-  "version": "6.2.52",
+  "version": "6.3.53",
   "private": true,
   "scripts": {
     "dev": "next dev",

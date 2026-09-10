@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown, Bookmark, Globe } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Search, Briefcase, MapPin, ArrowUpDown, Clock, ChevronDown, Bookmark, Globe, Sparkles, X } from 'lucide-react';
 import JobCard from '@/components/jobs/JobCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { JobCardSkeleton } from '@/components/ui/Skeleton';
@@ -49,6 +50,41 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   const [languageFilter, setLanguageFilter] = useState('english');
   const [sortBy, setSortBy] = useState('newest');
   const [page, setPage] = useState(1);
+
+  // Update 54 — Resume Intelligence, step 6. `?resumeMatch=1` arrives
+  // from the post-signup prompt (ResumeOnboardingPrompt.jsx), but
+  // works the same way any time it's on the URL — nothing here is
+  // signup-specific. Fetches the same /api/resume/matches endpoint
+  // Update 53 already built for the Profile page's compact match
+  // list; this is just a second, more prominent surface for the same
+  // engine, not a second matching system.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [resumeMatchActive, setResumeMatchActive] = useState(false);
+  const [resumeMatchUrls, setResumeMatchUrls] = useState(null);
+  const [resumeMatchIsFallback, setResumeMatchIsFallback] = useState(false);
+  const [resumeMatchLoading, setResumeMatchLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('resumeMatch') !== '1') return;
+    setResumeMatchActive(true);
+    setResumeMatchLoading(true);
+    fetch('/api/resume/matches')
+      .then((res) => res.json())
+      .then((data) => {
+        setResumeMatchUrls(new Set((data.matches || []).map((m) => m.apply_url)));
+        setResumeMatchIsFallback(Boolean(data.isFallback));
+      })
+      .catch(() => setResumeMatchUrls(new Set()))
+      .finally(() => setResumeMatchLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function clearResumeMatch() {
+    setResumeMatchActive(false);
+    setResumeMatchUrls(null);
+    router.replace(jobType === 'Internship' ? '/internships' : '/jobs');
+  }
 
   const { addToast } = useToast();
 
@@ -231,7 +267,21 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
       // 'en' here too, matching the scraper/schema's own default —
       // one fail-open rule, not two that could disagree.
       const matchesLanguage = languageFilter === 'all' || (job.language || 'en') === 'en';
-      return matchesSearch && matchesRole && matchesLocation && matchesRemote && matchesSaved && matchesLanguage;
+      // Update 54 — when resume-match mode is on but the matches
+      // haven't loaded yet (resumeMatchUrls still null), nothing
+      // passes this filter rather than briefly flashing the
+      // unfiltered full list before the fetch resolves.
+      const matchesResume =
+        !resumeMatchActive || (resumeMatchUrls && resumeMatchUrls.has(job.apply_url));
+      return (
+        matchesSearch &&
+        matchesRole &&
+        matchesLocation &&
+        matchesRemote &&
+        matchesSaved &&
+        matchesLanguage &&
+        matchesResume
+      );
     });
 
     list = [...list].sort((a, b) => {
@@ -271,7 +321,19 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
     });
 
     return list;
-  }, [visibleJobs, search, role, location, remoteOnly, savedOnly, savedByUrl, languageFilter, sortBy]);
+  }, [
+    visibleJobs,
+    search,
+    role,
+    location,
+    remoteOnly,
+    savedOnly,
+    savedByUrl,
+    languageFilter,
+    sortBy,
+    resumeMatchActive,
+    resumeMatchUrls,
+  ]);
 
   const paged = filtered.slice(0, page * PAGE_SIZE);
 
@@ -332,6 +394,34 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
             minute: '2-digit',
           })}
         </p>
+      )}
+
+      {resumeMatchActive && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-card border border-brand/30 bg-brand/5 p-3.5 dark:border-brand-light/30 dark:bg-brand-light/5">
+          <div className="flex items-start gap-2">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand dark:text-brand-light" strokeWidth={2.25} />
+            <div>
+              <p className="text-sm font-semibold">
+                {resumeMatchLoading
+                  ? 'Finding jobs that match your resume…'
+                  : resumeMatchIsFallback
+                    ? "Nothing matched your specific skills closely — here's what's closest"
+                    : `Showing ${filtered.length} job${filtered.length === 1 ? '' : 's'} matching your resume`}
+              </p>
+              <p className="mt-0.5 text-xs text-ink-muted dark:text-slate-400">
+                Based on the skills in your uploaded resume — no AI, just keyword matching.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={clearResumeMatch}
+            className="flex shrink-0 items-center gap-1 rounded-md border border-ink/15 px-2 py-1 text-xs font-medium text-ink-soft hover:bg-ink/5 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/5"
+          >
+            <X className="h-3 w-3" strokeWidth={2.5} />
+            Show all {noun}s
+          </button>
+        </div>
       )}
 
       {!isAdmin && (

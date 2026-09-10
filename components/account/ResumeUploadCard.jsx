@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FileUp, X, RefreshCw, Check, AlertTriangle, Minus } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastProvider';
+import ResumeJobMatches from './ResumeJobMatches';
 
 // Update 47 — Resume Intelligence, step 1. This card lives on
 // /profile for now — it's temporary real estate: step 6 of the
@@ -30,6 +31,10 @@ import { useToast } from '@/components/ui/ToastProvider';
 // something that reads like a real report instead of a checklist. The
 // detailed pass/fail breakdown below it still exists — the score is a
 // summary of it, not a replacement for it.
+//
+// Update 53 added ResumeJobMatches below — step 5. The matching engine
+// (lib/resumeJobMatching.js) getting its first visible surface; a
+// more prominent home (onboarding, the Dashboard) comes in steps 6–7.
 
 function ScoreReport({ report }) {
   if (!report || report.score === null) return null;
@@ -300,9 +305,9 @@ export default function ResumeUploadCard() {
     <div className="rounded-card border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-slate-800">
       <h2 className="text-sm font-semibold">Resume</h2>
       <p className="mt-1 text-sm text-ink-muted dark:text-slate-400">
-        Upload a PDF or DOCX and we'll score it, check its formatting, and pull out the skills we
-        recognize — no AI involved, just rule-based checks and keyword matching against a
-        curated list. Matching you to jobs based on your skills is coming in a later update.
+        Upload a PDF or DOCX and we'll score it, check its formatting, pull out the skills we
+        recognize, and show jobs from the live cache that match those skills — no AI involved,
+        just rule-based checks and keyword matching throughout.
       </p>
 
       <input
@@ -364,6 +369,8 @@ export default function ResumeUploadCard() {
                 )}
 
                 <AtsChecksSummary checks={resume.ats_checks} />
+
+                <ResumeJobMatches key={resume.uploaded_at} />
 
                 <button
                   type="button"

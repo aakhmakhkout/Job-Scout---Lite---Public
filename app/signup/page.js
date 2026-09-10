@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import AuthInput from '@/components/auth/AuthInput';
 import RecoveryKeyDisplay from '@/components/account/RecoveryKeyDisplay';
+import ResumeOnboardingPrompt from '@/components/account/ResumeOnboardingPrompt';
 import { createClient } from '@/lib/supabase/client';
 
 // No email confirmation step — this project turns "Confirm email" off in
@@ -25,6 +26,15 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [recoveryKey, setRecoveryKey] = useState(null);
   const [acknowledged, setAcknowledged] = useState(false);
+  // Update 54 — Resume Intelligence, step 6. A third screen, shown
+  // only after the recovery key is acknowledged: "upload resume" or
+  // "skip," exactly what the roadmap asked for. Kept as its own piece
+  // of state rather than folded into `recoveryKey` (e.g. a 3-value
+  // enum) since the two screens are genuinely independent concerns —
+  // one's about account recovery, the other's about resume upload —
+  // and keeping them as separate booleans means neither has to know
+  // the other exists.
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -56,6 +66,17 @@ export default function SignupPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (showResumePrompt) {
+    return (
+      <AuthShell
+        title="Want a head start on job matches?"
+        subtitle="Upload your resume and we'll show you jobs that fit your skills — or skip and browse everything yourself."
+      >
+        <ResumeOnboardingPrompt />
+      </AuthShell>
+    );
   }
 
   if (recoveryKey) {
@@ -90,10 +111,10 @@ export default function SignupPage() {
         <button
           type="button"
           disabled={!acknowledged}
-          onClick={() => router.push('/dashboard')}
+          onClick={() => setShowResumePrompt(true)}
           className="mt-4 w-full rounded-md bg-brand px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Continue to dashboard
+          Continue
         </button>
       </AuthShell>
     );

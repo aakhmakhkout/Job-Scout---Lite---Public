@@ -4,7 +4,7 @@ import StatCard from '@/components/dashboard/StatCard';
 import MarketSnapshotChart from '@/components/dashboard/MarketSnapshotChart';
 import TopCompaniesWidget from '@/components/dashboard/TopCompaniesWidget';
 import ResourceCategoryBox from '@/components/dashboard/ResourceCategoryBox';
-import ComingSoonBox from '@/components/dashboard/ComingSoonBox';
+import ResumeUploadCard from '@/components/account/ResumeUploadCard';
 import { getJobsCache } from '@/lib/jobsCache';
 import { computeMarketSnapshot, computeTopCompanies } from '@/lib/dashboardStats';
 import { getResourceCategories } from '@/lib/resourceCategories';
@@ -111,8 +111,14 @@ export default async function DashboardPage() {
   const showTopCompanies = isVisible('top_companies');
   const showIntelligenceSection = showMarketSnapshot || showTopCompanies;
 
-  const showInterviewPrep = isVisible('interview_prep');
-  const interviewPrepCopy = widgets.interview_prep || {};
+  // Update 55 — Resume Intelligence, step 7. Interview prep (the
+  // Step 26 "coming soon" placeholder) is gone entirely, replaced by
+  // a real, full-width Resume review section below the resources
+  // grid — not squeezed into the 3-column grid the way the
+  // placeholder was, since a full ResumeUploadCard (score, tips,
+  // matched jobs) needs real room, not a small box's worth of space.
+  const showResumeReview = !isAdmin && isVisible('resume_review');
+  const resumeReviewCopy = widgets.resume_review || {};
   // A category with no matching row in `dashboard_widgets` (true for
   // every category by default, and always true for one just added via
   // Update 46's admin UI) correctly falls through to `visible: true`
@@ -120,7 +126,7 @@ export default async function DashboardPage() {
   // hidden, so a brand-new category shows up immediately without
   // needing a matching widgets-table row created for it first.
   const visibleResourceCategories = categories.filter((c) => isVisible(`resource_${c.key}`));
-  const showResourcesSection = visibleResourceCategories.length > 0 || showInterviewPrep;
+  const showResourcesSection = visibleResourceCategories.length > 0;
 
   return (
     <AppShell
@@ -196,23 +202,21 @@ export default async function DashboardPage() {
           <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
             Resources &amp; prep
           </h2>
-          {/* All three boxes share one grid on purpose — with the old
-              "Useful websites"/"Useful tools" split (Step 15–18) gone
-              (merged into one "Free tools & sites" box, Step 20), there
-              are exactly 3 boxes here by default, so a 3-column grid
-              fills evenly instead of leaving a half-empty row like the
-              old 2-column Interview-prep-alone grid did. Step 26: if
-              admin hides one or two of the three, this grid just has
-              fewer items — an accepted trade-off of making sections
-              independently toggleable, not something worth building a
-              dynamic column-count system for. */}
+          {/* Update 55: Interview prep (the old "coming soon" third
+              box here) is gone — replaced by the full-width Resume
+              review section below, which needs real room a grid cell
+              can't give it. This grid is just the resource-category
+              boxes now, however many admin's created via Update 46's
+              category CRUD — 1, 2, a dozen, whatever it is, the grid
+              just wraps. No more "exactly 3 by default" assumption to
+              maintain. */}
           <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
             {visibleResourceCategories.map((category) => {
               // Title/description can be admin-overridden (Step 26).
               // `items` now come from the resource_items table (Step
               // 27), not from code — an empty array here correctly
               // falls through to ResourceCategoryBox's own Coming-soon
-              // fallback, same as Interview prep.
+              // fallback.
               const override = widgets[`resource_${category.key}`] || {};
               return (
                 <ResourceCategoryBox
@@ -223,18 +227,21 @@ export default async function DashboardPage() {
                 />
               );
             })}
-            {showInterviewPrep && (
-              <ComingSoonBox
-                title={
-                  interviewPrepCopy.title ||
-                  'Interview prep'
-                }
-                description={
-                  interviewPrepCopy.description ||
-                  'Question banks, mock-interview tips, and company-specific prep — planned, not built yet.'
-                }
-              />
-            )}
+          </div>
+        </div>
+      )}
+
+      {showResumeReview && (
+        <div className="mt-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
+            {resumeReviewCopy.title || 'Resume review'}
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted dark:text-slate-400">
+            {resumeReviewCopy.description ||
+              'Upload your resume for an instant score, formatting tips, and jobs that match your skills.'}
+          </p>
+          <div className="mt-3">
+            <ResumeUploadCard />
           </div>
         </div>
       )}

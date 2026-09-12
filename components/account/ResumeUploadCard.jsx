@@ -90,13 +90,19 @@ function ScoreReport({ report, roleInfo }) {
         </p>
       )}
 
-      {roleInfo?.primaryRole && AVAILABLE_ROADMAP_ROLES.includes(roleInfo.primaryRole) && (
+      {roleInfo?.primaryRole && roleInfo.roles.some((r) => AVAILABLE_ROADMAP_ROLES.includes(r.role)) && (
         <a
-          href={`/roadmap?role=${encodeURIComponent(roleInfo.primaryRole)}`}
+          href={
+            roleInfo.isSingleRole
+              ? `/roadmap?role=${encodeURIComponent(roleInfo.primaryRole)}`
+              : '/roadmap'
+          }
           className="mt-3 flex items-center gap-1.5 border-t border-ink/10 pt-3 text-xs font-medium text-brand hover:underline dark:border-white/10 dark:text-brand-light"
         >
           <Map className="h-3.5 w-3.5" strokeWidth={2.25} />
-          Check your {roleInfo.primaryRole} roadmap for what to learn next
+          {roleInfo.isSingleRole
+            ? `Check your ${roleInfo.primaryRole} roadmap for what to learn next`
+            : 'Check your roadmap for what to learn next'}
         </a>
       )}
     </div>

@@ -62,7 +62,7 @@ export default function ResumeJobMatches() {
   if (state.matches.length === 0) return null;
 
   return (
-    <div className="mt-3 border-t border-ink/10 pt-3 dark:border-white/10">
+    <div className="border-t border-ink/10 pt-3 dark:border-white/10">
       <div className="flex items-center gap-1.5">
         <Sparkles className="h-3.5 w-3.5 text-brand dark:text-brand-light" strokeWidth={2.25} />
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">

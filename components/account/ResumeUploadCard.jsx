@@ -1,45 +1,37 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileUp, X, RefreshCw, Check, AlertTriangle, Minus, Map } from 'lucide-react';
+import { FileUp, X, RefreshCw, Check, AlertTriangle, Minus, Map, ChevronDown } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastProvider';
 import ResumeJobMatches from './ResumeJobMatches';
 import { AVAILABLE_ROADMAP_ROLES } from '@/lib/roadmaps';
 
-// Update 47 — Resume Intelligence, step 1. This card lives on
-// /profile for now — it's temporary real estate: step 6 of the
-// roadmap (tracked in updates.md) moves the upload entry point into
-// onboarding, and step 7 gives it a proper full-width home on the
-// Dashboard itself. This is deliberately just "upload it, see what we
-// found" for now, nothing more.
-//
-// Update 49 added the "Formatting checks" section below — step 2 of
-// the roadmap. These are raw findings, shown plainly (a checkmark, a
-// warning, or "not checked for this file type") — NOT yet a polished
-// score or a tips list. That's step 4's job, once there's enough
-// combined raw material (this step + step 3) to turn into one real
-// report.
-//
-// Update 51 added the "Section order" block — step 3. Worth saying in
-// the UI itself, not just the code comments: most ATS software
-// doesn't actually care what order your sections are in, it just
-// looks for headers as anchors. This is about what's easiest for a
-// human skimming quickly, not a parsing requirement — so it's shown
-// as a suggestion, not a pass/fail.
-//
-// Update 52 added the actual headline: a 0–100 score and a priority-
-// ordered tips list (lib/resumeScore.js), combining steps 2 and 3 into
-// something that reads like a real report instead of a checklist. The
-// detailed pass/fail breakdown below it still exists — the score is a
-// summary of it, not a replacement for it.
-//
-// Update 53 added ResumeJobMatches below — step 5. The matching engine
-// (lib/resumeJobMatching.js) getting its first visible surface; a
-// more prominent home (onboarding, the Dashboard) comes in steps 6–7.
+// Update 60 — Career Roadmap, sub-step 5. Restructured into two
+// layers, exactly as originally described: a compact summary (score,
+// role, a quick ATS-friendly yes/no, the roadmap link) that's always
+// visible, and a big detailed report underneath it — the formatting
+// checks, section order, skills, and matched jobs already built in
+// earlier updates — that only renders when explicitly expanded.
+// Nothing in the detailed report is new *content*; this update only
+// changes how much of it shows by default.
+// A quick, compact yes/no companion to the numeric score — not a
+// second, separately-computed score, just a plain-language read of
+// whether the core ATS-relevant checks (contact info detectable, key
+// sections present, and structure checks when they were run at all)
+// came back clean. The numeric score already weighs these along with
+// everything else; this is a shortcut for someone who just wants a
+// yes/no without reading the breakdown.
+function isAtsFriendly(checks) {
+  if (!checks) return null;
+  const { contactInfo, sections, structure } = checks;
+  const coreOk = contactInfo.hasEmail && contactInfo.hasPhone && sections.hasExperience && sections.hasSkills;
+  const structureOk = !structure.checked || (!structure.hasTables && !structure.hasTextBoxes);
+  return coreOk && structureOk;
+}
 
-function ScoreReport({ report, roleInfo }) {
+function ScoreReport({ report, roleInfo, atsFriendly }) {
   if (!report || report.score === null) return null;
-  const { score, label, tips } = report;
+  const { score, label } = report;
 
   const scoreColor =
     score >= 90
@@ -52,7 +44,7 @@ function ScoreReport({ report, roleInfo }) {
 
   return (
     <div className="mt-3 rounded-md border border-ink/10 bg-ink/[0.02] p-3 dark:border-white/10 dark:bg-white/[0.02]">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className={`text-3xl font-bold leading-none ${scoreColor}`}>{score}</div>
           <div>
@@ -60,35 +52,27 @@ function ScoreReport({ report, roleInfo }) {
             <p className="text-xs text-ink-muted dark:text-slate-400">Resume score, out of 100</p>
           </div>
         </div>
-        {roleInfo?.primaryRole && (
-          <span className="shrink-0 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand dark:text-brand-light">
-            {roleInfo.primaryRole}
-            {!roleInfo.isSingleRole && roleInfo.roles.length > 1 ? ' +' : ''}
-          </span>
-        )}
-      </div>
-
-      {tips.length > 0 ? (
-        <div className="mt-3 space-y-1.5 border-t border-ink/10 pt-3 dark:border-white/10">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
-            Tips, most impactful first
-          </p>
-          {tips.map((tip) => (
-            <div key={tip} className="flex items-start gap-1.5 text-xs">
-              <AlertTriangle
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
-                strokeWidth={2.5}
-              />
-              <span>{tip}</span>
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {atsFriendly !== null && (
+            <span
+              className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                atsFriendly
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+              }`}
+            >
+              {atsFriendly ? <Check className="h-3 w-3" strokeWidth={3} /> : <AlertTriangle className="h-3 w-3" strokeWidth={2.5} />}
+              {atsFriendly ? 'ATS-friendly' : 'ATS issues found'}
+            </span>
+          )}
+          {roleInfo?.primaryRole && (
+            <span className="shrink-0 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand dark:text-brand-light">
+              {roleInfo.primaryRole}
+              {!roleInfo.isSingleRole && roleInfo.roles.length > 1 ? ' +' : ''}
+            </span>
+          )}
         </div>
-      ) : (
-        <p className="mt-3 flex items-center gap-1.5 border-t border-ink/10 pt-3 text-xs text-emerald-600 dark:border-white/10 dark:text-emerald-400">
-          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Nothing major to flag — nice work.
-        </p>
-      )}
+      </div>
 
       {roleInfo?.primaryRole && roleInfo.roles.some((r) => AVAILABLE_ROADMAP_ROLES.includes(r.role)) && (
         <a
@@ -106,6 +90,30 @@ function ScoreReport({ report, roleInfo }) {
         </a>
       )}
     </div>
+  );
+}
+
+function TipsList({ tips }) {
+  return tips.length > 0 ? (
+    <div className="space-y-1.5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
+        Tips, most impactful first
+      </p>
+      {tips.map((tip) => (
+        <div key={tip} className="flex items-start gap-1.5 text-xs">
+          <AlertTriangle
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
+            strokeWidth={2.5}
+          />
+          <span>{tip}</span>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+      Nothing major to flag — nice work.
+    </p>
   );
 }
 
@@ -187,7 +195,7 @@ function AtsChecksSummary({ checks }) {
   const { wordCount, sections, sectionOrder, contactInfo, bullets, structure } = checks;
 
   return (
-    <div className="mt-4 border-t border-ink/10 pt-3 dark:border-white/10">
+    <div className="border-t border-ink/10 pt-3 dark:border-white/10">
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
         Formatting checks
       </p>
@@ -262,6 +270,7 @@ export default function ResumeUploadCard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const fileInputRef = useRef(null);
   const { addToast } = useToast();
 
@@ -373,29 +382,51 @@ export default function ResumeUploadCard() {
                   </button>
                 </div>
 
-                <ScoreReport report={resume.report} roleInfo={resume.roleInfo} />
+                <ScoreReport
+                  report={resume.report}
+                  roleInfo={resume.roleInfo}
+                  atsFriendly={isAtsFriendly(resume.ats_checks)}
+                />
 
-                {resume.extracted_skills.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {resume.extracted_skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand dark:text-brand-light"
-                      >
-                        {skill}
-                      </span>
-                    ))}
+                <button
+                  type="button"
+                  onClick={() => setShowDetails((d) => !d)}
+                  className="mt-3 flex w-full items-center justify-between rounded-md border border-ink/10 px-3 py-2 text-xs font-medium text-ink-soft hover:bg-ink/5 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                >
+                  {showDetails ? 'Hide detailed report' : 'View detailed report'}
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`}
+                    strokeWidth={2.25}
+                  />
+                </button>
+
+                {showDetails && (
+                  <div className="mt-3 space-y-3 border-t border-ink/10 pt-3 dark:border-white/10">
+                    <TipsList tips={resume.report?.tips || []} />
+
+                    {resume.extracted_skills.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {resume.extracted_skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand dark:text-brand-light"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-ink-muted dark:text-slate-400">
+                        Didn't recognize any skills from our list in this file — that's a
+                        limitation of keyword matching, not necessarily your resume.
+                      </p>
+                    )}
+
+                    <AtsChecksSummary checks={resume.ats_checks} />
+
+                    <ResumeJobMatches key={resume.uploaded_at} />
                   </div>
-                ) : (
-                  <p className="mt-3 text-xs text-ink-muted dark:text-slate-400">
-                    Didn't recognize any skills from our list in this file — that's a limitation
-                    of keyword matching, not necessarily your resume.
-                  </p>
                 )}
-
-                <AtsChecksSummary checks={resume.ats_checks} />
-
-                <ResumeJobMatches key={resume.uploaded_at} />
 
                 <button
                   type="button"

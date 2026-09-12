@@ -36,7 +36,7 @@ import ResumeJobMatches from './ResumeJobMatches';
 // (lib/resumeJobMatching.js) getting its first visible surface; a
 // more prominent home (onboarding, the Dashboard) comes in steps 6–7.
 
-function ScoreReport({ report }) {
+function ScoreReport({ report, roleInfo }) {
   if (!report || report.score === null) return null;
   const { score, label, tips } = report;
 
@@ -51,12 +51,20 @@ function ScoreReport({ report }) {
 
   return (
     <div className="mt-3 rounded-md border border-ink/10 bg-ink/[0.02] p-3 dark:border-white/10 dark:bg-white/[0.02]">
-      <div className="flex items-center gap-3">
-        <div className={`text-3xl font-bold leading-none ${scoreColor}`}>{score}</div>
-        <div>
-          <p className="text-sm font-semibold">{label}</p>
-          <p className="text-xs text-ink-muted dark:text-slate-400">Resume score, out of 100</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className={`text-3xl font-bold leading-none ${scoreColor}`}>{score}</div>
+          <div>
+            <p className="text-sm font-semibold">{label}</p>
+            <p className="text-xs text-ink-muted dark:text-slate-400">Resume score, out of 100</p>
+          </div>
         </div>
+        {roleInfo?.primaryRole && (
+          <span className="shrink-0 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand dark:text-brand-light">
+            {roleInfo.primaryRole}
+            {!roleInfo.isSingleRole && roleInfo.roles.length > 1 ? ' +' : ''}
+          </span>
+        )}
       </div>
 
       {tips.length > 0 ? (
@@ -348,7 +356,7 @@ export default function ResumeUploadCard() {
                   </button>
                 </div>
 
-                <ScoreReport report={resume.report} />
+                <ScoreReport report={resume.report} roleInfo={resume.roleInfo} />
 
                 {resume.extracted_skills.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-1.5">

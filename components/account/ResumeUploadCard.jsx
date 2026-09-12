@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileUp, X, RefreshCw, Check, AlertTriangle, Minus } from 'lucide-react';
+import { FileUp, X, RefreshCw, Check, AlertTriangle, Minus, Map } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastProvider';
 import ResumeJobMatches from './ResumeJobMatches';
+import { AVAILABLE_ROADMAP_ROLES } from '@/lib/roadmaps';
 
 // Update 47 — Resume Intelligence, step 1. This card lives on
 // /profile for now — it's temporary real estate: step 6 of the
@@ -87,6 +88,16 @@ function ScoreReport({ report, roleInfo }) {
           <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
           Nothing major to flag — nice work.
         </p>
+      )}
+
+      {roleInfo?.primaryRole && AVAILABLE_ROADMAP_ROLES.includes(roleInfo.primaryRole) && (
+        <a
+          href={`/roadmap?role=${encodeURIComponent(roleInfo.primaryRole)}`}
+          className="mt-3 flex items-center gap-1.5 border-t border-ink/10 pt-3 text-xs font-medium text-brand hover:underline dark:border-white/10 dark:text-brand-light"
+        >
+          <Map className="h-3.5 w-3.5" strokeWidth={2.25} />
+          Check your {roleInfo.primaryRole} roadmap for what to learn next
+        </a>
       )}
     </div>
   );

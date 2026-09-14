@@ -3,8 +3,7 @@ import AppShell from '@/components/layout/AppShell';
 import StatCard from '@/components/dashboard/StatCard';
 import MarketSnapshotChart from '@/components/dashboard/MarketSnapshotChart';
 import TopCompaniesWidget from '@/components/dashboard/TopCompaniesWidget';
-import ResourceCategoryBox from '@/components/dashboard/ResourceCategoryBox';
-import ResumeUploadCard from '@/components/account/ResumeUploadCard';
+import ResourcesGridSection from '@/components/dashboard/ResourcesGridSection';
 import { getJobsCache } from '@/lib/jobsCache';
 import { computeMarketSnapshot, computeTopCompanies } from '@/lib/dashboardStats';
 import { getResourceCategories } from '@/lib/resourceCategories';
@@ -113,10 +112,15 @@ export default async function DashboardPage() {
 
   // Update 55 — Resume Intelligence, step 7. Interview prep (the
   // Step 26 "coming soon" placeholder) is gone entirely, replaced by
-  // a real, full-width Resume review section below the resources
-  // grid — not squeezed into the 3-column grid the way the
-  // placeholder was, since a full ResumeUploadCard (score, tips,
-  // matched jobs) needs real room, not a small box's worth of space.
+  // a Resume review section.
+  //
+  // Update 65 — that section now lives INSIDE the resources grid as a
+  // third card (see ResourcesGridSection) instead of a separate
+  // full-width row below it — the earlier full-width placement left
+  // an empty-looking third grid slot once there were only 2 resource
+  // categories to fill a 3-column grid. The detailed report still
+  // gets real room; it just renders below the whole grid now instead
+  // of inside a full-width card.
   const showResumeReview = !isAdmin && isVisible('resume_review');
   const resumeReviewCopy = widgets.resume_review || {};
   // A category with no matching row in `dashboard_widgets` (true for
@@ -197,51 +201,37 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {showResourcesSection && (
+      {(showResourcesSection || showResumeReview) && (
         <div className="mt-6">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
             Resources &amp; prep
           </h2>
-          {/* Update 55: Interview prep (the old "coming soon" third
-              box here) is gone — replaced by the full-width Resume
-              review section below, which needs real room a grid cell
-              can't give it. This grid is just the resource-category
-              boxes now, however many admin's created via Update 46's
-              category CRUD — 1, 2, a dozen, whatever it is, the grid
-              just wraps. No more "exactly 3 by default" assumption to
-              maintain. */}
-          <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {visibleResourceCategories.map((category) => {
-              // Title/description can be admin-overridden (Step 26).
-              // `items` now come from the resource_items table (Step
-              // 27), not from code — an empty array here correctly
-              // falls through to ResourceCategoryBox's own Coming-soon
-              // fallback.
-              const override = widgets[`resource_${category.key}`] || {};
-              return (
-                <ResourceCategoryBox
-                  key={category.key}
-                  title={override.title || category.title}
-                  description={override.description || category.description}
-                  items={resourceItemsByCategory[category.key] || []}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {showResumeReview && (
-        <div className="mt-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
-            {resumeReviewCopy.title || 'Resume review'}
-          </h2>
-          <p className="mt-1 text-sm text-ink-muted dark:text-slate-400">
-            {resumeReviewCopy.description ||
-              'Upload your resume for an instant score, formatting tips, and jobs that match your skills.'}
-          </p>
+          {/* Update 65: the Resume review box moved INTO this grid as
+              a third card (matching ResourceCategoryBox's size/shape)
+              instead of living in its own full-width row below —
+              filling the empty third slot Update 55 left once
+              Interview prep was removed and there were only 2
+              resource categories. Detailed report still opens below
+              the whole grid, just now via ResourcesGridSection's own
+              state instead of an inline expand within a full-width
+              card. */}
           <div className="mt-3">
-            <ResumeUploadCard />
+            <ResourcesGridSection
+              categories={visibleResourceCategories.map((category) => {
+                const override = widgets[`resource_${category.key}`] || {};
+                return {
+                  key: category.key,
+                  title: override.title || category.title,
+                  description: override.description || category.description,
+                  items: resourceItemsByCategory[category.key] || [],
+                };
+              })}
+              resumeBoxTitle={resumeReviewCopy.title || 'Resume review'}
+              resumeBoxDescription={
+                resumeReviewCopy.description ||
+                'Upload your resume for an instant score, tips, and job matches.'
+              }
+            />
           </div>
         </div>
       )}

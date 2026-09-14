@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { FileUp, X, RefreshCw, Check, AlertTriangle, Minus, Map, ChevronDown } from 'lucide-react';
-import { useToast } from '@/components/ui/ToastProvider';
-import ResumeJobMatches from './ResumeJobMatches';
+import { FileUp, X, RefreshCw, Check, AlertTriangle, ChevronDown, Map } from 'lucide-react';
+import ResumeDetailedReport from './ResumeDetailedReport';
+import { useResumeManager } from './useResumeManager';
 import { AVAILABLE_ROADMAP_ROLES } from '@/lib/roadmaps';
+import { isAtsFriendly } from '@/lib/resumeScore';
+import { useState } from 'react';
 
 // Update 60 — Career Roadmap, sub-step 5. Restructured into two
 // layers, exactly as originally described: a compact summary (score,
@@ -12,22 +13,20 @@ import { AVAILABLE_ROADMAP_ROLES } from '@/lib/roadmaps';
 // visible, and a big detailed report underneath it — the formatting
 // checks, section order, skills, and matched jobs already built in
 // earlier updates — that only renders when explicitly expanded.
-// Nothing in the detailed report is new *content*; this update only
-// changes how much of it shows by default.
-// A quick, compact yes/no companion to the numeric score — not a
-// second, separately-computed score, just a plain-language read of
-// whether the core ATS-relevant checks (contact info detectable, key
-// sections present, and structure checks when they were run at all)
-// came back clean. The numeric score already weighs these along with
-// everything else; this is a shortcut for someone who just wants a
-// yes/no without reading the breakdown.
-function isAtsFriendly(checks) {
-  if (!checks) return null;
-  const { contactInfo, sections, structure } = checks;
-  const coreOk = contactInfo.hasEmail && contactInfo.hasPhone && sections.hasExperience && sections.hasSkills;
-  const structureOk = !structure.checked || (!structure.hasTables && !structure.hasTextBoxes);
-  return coreOk && structureOk;
-}
+//
+// Update 65 — the upload/fetch/remove logic (useResumeManager) and
+// the detailed-report content (ResumeDetailedReport) are now shared
+// with the Dashboard's own compact resume box
+// (components/dashboard/ResumeSummaryBox.jsx) instead of being
+// duplicated. This file is now specifically the /profile layout: full
+// width, detail expands inline in the same card. The Dashboard's
+// version looks different (a compact grid box, detail opens in a
+// separate section below the grid) but shares the same underlying
+// data and actions.
+
+// A quick, compact yes/no companion to the numeric score — see
+// lib/resumeScore.js's isAtsFriendly() for the actual logic, shared
+// with the Dashboard's ResumeSummaryBox.
 
 function ScoreReport({ report, roleInfo, atsFriendly }) {
   if (!report || report.score === null) return null;
@@ -81,259 +80,22 @@ function ScoreReport({ report, roleInfo, atsFriendly }) {
               ? `/roadmap?role=${encodeURIComponent(roleInfo.primaryRole)}`
               : '/roadmap'
           }
-          className="mt-3 flex items-center gap-1.5 border-t border-ink/10 pt-3 text-xs font-medium text-brand hover:underline dark:border-white/10 dark:text-brand-light"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
         >
           <Map className="h-3.5 w-3.5" strokeWidth={2.25} />
           {roleInfo.isSingleRole
-            ? `Check your ${roleInfo.primaryRole} roadmap for what to learn next`
-            : 'Check your roadmap for what to learn next'}
+            ? `Check your ${roleInfo.primaryRole} roadmap`
+            : 'Check your roadmap'}
         </a>
       )}
     </div>
   );
 }
 
-function TipsList({ tips }) {
-  return tips.length > 0 ? (
-    <div className="space-y-1.5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
-        Tips, most impactful first
-      </p>
-      {tips.map((tip) => (
-        <div key={tip} className="flex items-start gap-1.5 text-xs">
-          <AlertTriangle
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
-            strokeWidth={2.5}
-          />
-          <span>{tip}</span>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-      Nothing major to flag — nice work.
-    </p>
-  );
-}
-
-function CheckRow({ ok, label, detail }) {
-  const Icon = ok === null ? Minus : ok ? Check : AlertTriangle;
-  const color =
-    ok === null
-      ? 'text-ink-muted dark:text-slate-500'
-      : ok
-        ? 'text-emerald-600 dark:text-emerald-400'
-        : 'text-amber-600 dark:text-amber-400';
-  return (
-    <div className="flex items-start gap-2 py-1">
-      <Icon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${color}`} strokeWidth={2.5} />
-      <div>
-        <span className="text-xs font-medium">{label}</span>
-        {detail && <span className="ml-1 text-xs text-ink-muted dark:text-slate-400">{detail}</span>}
-      </div>
-    </div>
-  );
-}
-
-function SectionOrderBlock({ sectionOrder }) {
-  if (!sectionOrder) return null;
-  const { detectedOrder, recommendedOrder, matchesRecommended, issues } = sectionOrder;
-
-  return (
-    <div className="mt-3 border-t border-ink/10 pt-3 dark:border-white/10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
-        Section order
-      </p>
-
-      {detectedOrder.length < 2 ? (
-        <p className="mt-1.5 text-xs text-ink-muted dark:text-slate-400">
-          Not enough clearly-labeled sections found to check order (needs at least 2 of Summary,
-          Skills, Experience, or Education on their own header line).
-        </p>
-      ) : (
-        <>
-          <p className="mt-1.5 text-xs">
-            <span className="text-ink-muted dark:text-slate-400">Yours: </span>
-            <span className="font-medium">{detectedOrder.join(' → ')}</span>
-          </p>
-          <p className="mt-0.5 text-xs">
-            <span className="text-ink-muted dark:text-slate-400">Common convention: </span>
-            <span className="text-ink-muted dark:text-slate-400">{recommendedOrder.join(' → ')}</span>
-          </p>
-
-          {matchesRecommended ? (
-            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-              <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-              Matches the common convention
-            </div>
-          ) : (
-            <div className="mt-1.5 space-y-1">
-              {issues.map((issue) => (
-                <div
-                  key={issue}
-                  className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400"
-                >
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                  {issue}
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="mt-1.5 text-xs italic text-ink-muted dark:text-slate-400">
-            Most ATS software doesn't actually require a specific order — this is about what's
-            easiest for a human reviewer to skim quickly, not a parsing requirement.
-          </p>
-        </>
-      )}
-    </div>
-  );
-}
-
-function AtsChecksSummary({ checks }) {
-  if (!checks) return null;
-  const { wordCount, sections, sectionOrder, contactInfo, bullets, structure } = checks;
-
-  return (
-    <div className="border-t border-ink/10 pt-3 dark:border-white/10">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-slate-400">
-        Formatting checks
-      </p>
-      <p className="mt-1 text-xs text-ink-muted dark:text-slate-400">
-        The detail behind the score above — every individual check, shown plainly.
-      </p>
-
-      <div className="mt-2 grid gap-x-4 sm:grid-cols-2">
-        <CheckRow
-          ok={wordCount.status === 'ok'}
-          label={`${wordCount.count} words`}
-          detail={
-            wordCount.status === 'too-short'
-              ? '— on the short side for most resumes'
-              : wordCount.status === 'too-long'
-                ? '— quite long; consider trimming'
-                : ''
-          }
-        />
-        <CheckRow ok={contactInfo.hasEmail} label="Email address found" />
-        <CheckRow ok={contactInfo.hasPhone} label="Phone number found" />
-        <CheckRow
-          ok={bullets.total > 0 ? bullets.actionVerbCount / bullets.total >= 0.6 : null}
-          label={
-            bullets.total > 0
-              ? `${bullets.actionVerbCount} of ${bullets.total} bullets start with a strong action verb`
-              : 'No bullet points detected'
-          }
-        />
-        <CheckRow ok={sections.hasSummary} label="Summary / objective section" />
-        <CheckRow ok={sections.hasSkills} label="Skills section" />
-        <CheckRow ok={sections.hasExperience} label="Experience section" />
-        <CheckRow ok={sections.hasEducation} label="Education section" />
-
-        {structure.checked ? (
-          <>
-            <CheckRow
-              ok={!structure.hasTables}
-              label={structure.hasTables ? 'Uses tables' : 'No tables'}
-              detail={structure.hasTables ? '— some ATS parsers misread table content' : ''}
-            />
-            <CheckRow
-              ok={!structure.hasTextBoxes}
-              label={structure.hasTextBoxes ? 'Uses text boxes' : 'No text boxes'}
-              detail={structure.hasTextBoxes ? '— content inside these is often invisible to an ATS' : ''}
-            />
-            <CheckRow
-              ok={!structure.hasImages}
-              label={structure.hasImages ? 'Contains an image' : 'No images'}
-            />
-          </>
-        ) : (
-          <CheckRow
-            ok={null}
-            label="Table/image/text-box checks"
-            detail={
-              structure.pageCount
-                ? `not available for PDF yet — ${structure.pageCount} page${structure.pageCount === 1 ? '' : 's'} detected`
-                : 'not available for PDF yet'
-            }
-          />
-        )}
-      </div>
-
-      <SectionOrderBlock sectionOrder={sectionOrder} />
-    </div>
-  );
-}
-
 export default function ResumeUploadCard() {
-  const [resume, setResume] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [removing, setRemoving] = useState(false);
+  const { resume, loading, uploading, removing, fileInputRef, handleFileSelected, handleRemove } =
+    useResumeManager();
   const [showDetails, setShowDetails] = useState(false);
-  const fileInputRef = useRef(null);
-  const { addToast } = useToast();
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/resume')
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled) setResume(data.resume || null);
-      })
-      .catch(() => {
-        if (!cancelled) addToast("Couldn't load your resume status", 'warning');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleFileSelected(e) {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file later
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('resume', file);
-      const res = await fetch('/api/resume', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok || !data.resume) throw new Error(data.error || 'Failed to upload resume');
-      setResume(data.resume);
-      const scoreNote = data.resume.report?.score != null ? ` — scored ${data.resume.report.score}/100` : '';
-      addToast(
-        data.resume.extracted_skills.length > 0
-          ? `Resume uploaded${scoreNote} — found ${data.resume.extracted_skills.length} skill${
-              data.resume.extracted_skills.length === 1 ? '' : 's'
-            }`
-          : `Resume uploaded${scoreNote} — didn't recognize any skills from our list, but it's saved`
-      );
-    } catch (err) {
-      addToast(err.message || 'Could not upload resume', 'warning');
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function handleRemove() {
-    setRemoving(true);
-    try {
-      const res = await fetch('/api/resume', { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to remove resume');
-      setResume(null);
-      addToast('Resume removed');
-    } catch {
-      addToast('Could not remove resume', 'warning');
-    } finally {
-      setRemoving(false);
-    }
-  }
 
   return (
     <div className="rounded-card border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-slate-800">
@@ -401,30 +163,8 @@ export default function ResumeUploadCard() {
                 </button>
 
                 {showDetails && (
-                  <div className="mt-3 space-y-3 border-t border-ink/10 pt-3 dark:border-white/10">
-                    <TipsList tips={resume.report?.tips || []} />
-
-                    {resume.extracted_skills.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {resume.extracted_skills.map((skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand dark:text-brand-light"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-ink-muted dark:text-slate-400">
-                        Didn't recognize any skills from our list in this file — that's a
-                        limitation of keyword matching, not necessarily your resume.
-                      </p>
-                    )}
-
-                    <AtsChecksSummary checks={resume.ats_checks} />
-
-                    <ResumeJobMatches key={resume.uploaded_at} />
+                  <div className="mt-3 border-t border-ink/10 pt-3 dark:border-white/10">
+                    <ResumeDetailedReport resume={resume} />
                   </div>
                 )}
 

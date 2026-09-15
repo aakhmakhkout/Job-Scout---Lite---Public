@@ -1,33 +1,30 @@
-import { getViewer } from '@/lib/viewer';
-import Sidebar from './Sidebar';
 import Topbar from './Topbar';
-import MobileNav from './MobileNav';
 import Footer from './Footer';
 
-export default async function AppShell({ title, subtitle, icon, children }) {
-  // Defense in depth: middleware already gates these pages behind
-  // login (regular or admin, as of Step 23), but if this call hits a
-  // transient issue, degrade to "no email shown in the sidebar" rather
-  // than crashing the whole shell every logged-in page renders inside.
-  let userEmail;
-  let isAdmin = false;
-  try {
-    const viewer = await getViewer();
-    isAdmin = viewer.kind === 'admin';
-    userEmail = viewer.kind === 'user' ? viewer.user.email : viewer.kind === 'admin' ? viewer.admin.email : undefined;
-  } catch (err) {
-    userEmail = undefined;
-  }
-
+// Update 67 — loading states between pages. Sidebar and MobileNav
+// used to render fresh inside AppShell on every single page — meaning
+// the sidebar itself would flicker/reset on every navigation once a
+// loading.js skeleton was introduced (Next.js's loading.js suspends
+// everything inside the page.js it's paired with, and AppShell used
+// to be called FROM INSIDE page.js). They now live in the persistent
+// app/(app)/layout.js instead, which Next.js keeps mounted across
+// navigations within the group — so the sidebar stays visible and
+// interactive while a page's content loads, instead of the whole
+// screen flashing blank.
+//
+// AppShell is now just the per-page chrome that genuinely needs
+// page-specific data (Topbar's title/subtitle/icon — several pages
+// compute these from server-fetched data, like Dashboard's sync-time
+// subtitle or an admin import's own title, so this couldn't just move
+// to the layout and be driven by the URL alone) plus the content area
+// and footer. No longer async — it doesn't fetch anything itself
+// anymore; that's the layout's job now.
+export default function AppShell({ title, subtitle, icon, children }) {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar userEmail={userEmail} isAdmin={isAdmin} />
-      <div className="flex min-w-0 flex-1 flex-col pb-16 md:pb-0">
-        <Topbar title={title} subtitle={subtitle} icon={icon} />
-        <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
-        <Footer />
-      </div>
-      <MobileNav isAdmin={isAdmin} />
-    </div>
+    <>
+      <Topbar title={title} subtitle={subtitle} icon={icon} />
+      <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
+      <Footer />
+    </>
   );
 }

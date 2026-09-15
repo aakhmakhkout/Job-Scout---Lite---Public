@@ -40,3 +40,4 @@ app/admin/
 components/admin/
 lib/mockData.js
 components/jobs/JobCard.jsx
+app/(app)/admin

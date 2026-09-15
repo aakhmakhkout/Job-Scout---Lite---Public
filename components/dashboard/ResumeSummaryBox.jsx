@@ -26,6 +26,13 @@ import { AVAILABLE_ROADMAP_ROLES } from '@/lib/roadmaps';
 // components/dashboard/ResourcesGridSection.jsx, which owns the
 // showDetails state and passes it down here as a prop) since that's
 // where there's actually room for it.
+//
+// Update 66 added the points-breakdown bars below the badges — the
+// same 4 scoring categories from lib/resumeScore.js's breakdown
+// (Contact & sections, Formatting & structure, Bullets & wording,
+// Length), each shown as "earned/possible" with a small progress bar.
+// Added specifically because the card still looked sparse next to its
+// two list-heavy siblings even with the score ring and badges.
 export default function ResumeSummaryBox({
   title,
   description,
@@ -98,6 +105,32 @@ export default function ResumeSummaryBox({
                 </div>
               </div>
             </div>
+
+            {resume.report?.breakdown?.length > 0 && (
+              <div className="mt-4 space-y-1.5 border-t border-ink/10 pt-3 dark:border-white/10">
+                {resume.report.breakdown.map((cat) => {
+                  const pct = cat.possible > 0 ? cat.earned / cat.possible : 0;
+                  const barColor =
+                    pct >= 0.9 ? 'bg-emerald-500' : pct >= 0.6 ? 'bg-brand' : 'bg-amber-500';
+                  return (
+                    <div key={cat.label}>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-ink-soft dark:text-slate-300">{cat.label}</span>
+                        <span className="font-medium text-ink-muted dark:text-slate-400">
+                          {cat.earned}/{cat.possible}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-ink/10 dark:bg-white/10">
+                        <div
+                          className={`h-full rounded-full ${barColor}`}
+                          style={{ width: `${Math.round(pct * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="mt-4 space-y-2">
               {roleInfo?.primaryRole && roleInfo.roles.some((r) => AVAILABLE_ROADMAP_ROLES.includes(r.role)) && (

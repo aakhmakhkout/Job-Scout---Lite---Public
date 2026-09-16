@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { UserCircle2, LogOut, Trash2, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import DeleteAccountModal from '@/components/account/DeleteAccountModal';
+import { maskEmail } from '@/lib/maskEmail';
 
 export default function UserMenu({ userEmail, isAdmin = false }) {
   const router = useRouter();
@@ -52,8 +53,15 @@ export default function UserMenu({ userEmail, isAdmin = false }) {
           {isAdmin && (
             <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-brand" strokeWidth={2.25} aria-label="Admin" />
           )}
-          <span className="truncate text-xs text-ink-soft dark:text-slate-300" title={userEmail}>
-            {userEmail}
+          {/* Update 68 — an admin session shows only "Admin," never
+              any part of the email, not even masked: the ask was to
+              keep it safe on a screen recording, and a masked email
+              is still an email. Regular users get maskEmail()'s
+              partial reveal instead — no title attribute with the
+              real address either, since a tooltip on hover would
+              defeat the point just as much as showing it outright. */}
+          <span className="truncate text-xs text-ink-soft dark:text-slate-300">
+            {isAdmin ? 'Admin' : maskEmail(userEmail)}
           </span>
         </span>
         <span className="text-ink-muted dark:text-slate-400">

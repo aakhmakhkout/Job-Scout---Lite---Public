@@ -9,6 +9,8 @@ import {
   Lightbulb,
   PenTool,
   Image,
+  ShieldCheck,
+  Map,
   Link2,
   ChevronDown,
 } from 'lucide-react';
@@ -28,6 +30,8 @@ const ICONS = {
   Lightbulb,
   PenTool,
   Image,
+  ShieldCheck,
+  Map,
 };
 
 // Caps the item list to roughly 4 rows before it scrolls internally —

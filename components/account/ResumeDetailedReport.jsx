@@ -1,7 +1,7 @@
 'use client';
 
-import { Check, AlertTriangle, Minus } from 'lucide-react';
-import ResumeJobMatches from './ResumeJobMatches';
+import Link from 'next/link';
+import { Check, AlertTriangle, Minus, Sparkles, ArrowRight } from 'lucide-react';
 
 // Update 65 — extracted from components/account/ResumeUploadCard.jsx
 // so the Dashboard's separate below-the-grid report section
@@ -209,7 +209,23 @@ export default function ResumeDetailedReport({ resume }) {
 
       <AtsChecksSummary checks={resume.ats_checks} />
 
-      <ResumeJobMatches key={resume.uploaded_at} />
+      {/* Update 72 — was an inline list of up to 5 matched jobs
+          (ResumeJobMatches.jsx, now deleted) rendered right here.
+          Replaced with a single link into the Jobs page's existing
+          resumeMatch=1 mode (built in Update 54 for the post-signup
+          prompt, ResumeOnboardingPrompt.jsx) — same matching engine,
+          same /api/resume/matches endpoint, just one shared surface
+          for "show me jobs matching my resume" instead of two. */}
+      <Link
+        href="/jobs?resumeMatch=1"
+        className="flex items-center justify-between gap-2 rounded-md border border-brand/30 bg-brand/5 px-3 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-brand/10 dark:border-brand-light/30 dark:bg-brand-light/5 dark:text-brand-light"
+      >
+        <span className="flex items-center gap-1.5">
+          <Sparkles className="h-4 w-4" strokeWidth={2.25} />
+          Matching jobs
+        </span>
+        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.25} />
+      </Link>
     </div>
   );
 }

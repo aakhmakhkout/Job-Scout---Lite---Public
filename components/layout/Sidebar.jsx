@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Briefcase, GraduationCap, ClipboardList, CalendarClock, Shield } from 'lucide-react';
 import UserMenu from './UserMenu';
@@ -22,17 +21,11 @@ export default function Sidebar({ userEmail, isAdmin = false }) {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col overflow-y-auto border-r border-ink/10 bg-paper-dim px-4 py-6 dark:border-white/10 dark:bg-slate-950 md:flex">
-      <div className="mb-8 px-2">
-        {/*
-          Logo lockup has a white/teal wordmark baked into the image
-          (no theme-aware text), so it sits on a fixed dark chip —
-          bg-slate-950 with no dark: variant — rather than the
-          sidebar's own light/dark background, to stay legible in
-          both themes.
-        */}
-        <span className="inline-flex items-center rounded-md bg-slate-950 px-2 py-1.5">
-          <Image src="/logo.png" alt="JobScout Lite" width={160} height={113} className="h-7 w-auto" priority />
+      <div className="mb-8 flex items-center gap-2 px-2">
+        <span className="grid h-7 w-7 place-items-center rounded-md bg-brand text-sm font-bold text-white">
+          J
         </span>
+        <span className="font-display text-lg font-semibold">JobScout Lite</span>
       </div>
 
       <nav className="flex flex-col gap-1">

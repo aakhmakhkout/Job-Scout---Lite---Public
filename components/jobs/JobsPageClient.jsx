@@ -463,7 +463,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
               setRole(e.target.value);
               setPage(1);
             }}
-            className="select-field rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
+            className="select-field max-w-[150px] truncate rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15 sm:max-w-[190px]"
           >
             {roles.map((r) => (
               <option key={r} value={r}>
@@ -484,7 +484,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
               setLocation(e.target.value);
               setPage(1);
             }}
-            className="select-field rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
+            className="select-field max-w-[150px] truncate rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15 sm:max-w-[190px]"
           >
             {locations.map((l) => (
               <option key={l} value={l}>
@@ -505,7 +505,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
               setLanguageFilter(e.target.value);
               setPage(1);
             }}
-            className="select-field rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
+            className="select-field max-w-[130px] truncate rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
           >
             <option value="english">English</option>
             <option value="all">All languages</option>
@@ -553,7 +553,7 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="select-field rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15"
+            className="select-field max-w-[150px] truncate rounded-md border border-ink/15 py-2 pl-8 pr-3 text-sm dark:border-white/15 sm:max-w-[170px]"
           >
             <option value="newest">Sort: Newest</option>
             <option value="trust">Sort: Trust score</option>

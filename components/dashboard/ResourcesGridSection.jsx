@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import ResourceCategoryBox from './ResourceCategoryBox';
 import ResumeSummaryBox from './ResumeSummaryBox';
 import ResumeDetailedReport from '@/components/account/ResumeDetailedReport';
 import { useResumeManager } from '@/components/account/useResumeManager';
+import LoginModal from '@/components/auth/LoginModal';
 
 // Update 65 — combines the resource-category boxes and the Resume
 // review box into one grid (previously two separate sections: the
@@ -20,9 +22,40 @@ import { useResumeManager } from '@/components/account/useResumeManager';
 // already-resolved prop from the server (title/description/items all
 // merged with any admin overrides) since that data has no reason to
 // be client-fetched — only the resume half of this section does.
-export default function ResourcesGridSection({ categories, resumeBoxTitle, resumeBoxDescription }) {
+//
+// Update 77 — `isGuest` is new. Dashboard is now reachable without an
+// account; this section owns its own login-gate state (same pattern
+// as JobsPageClient's requireAuth) so a guest can still see the
+// resume box and attempt an upload, gated behind LoginModal instead
+// of the whole Dashboard being login-walled.
+export default function ResourcesGridSection({
+  categories,
+  resumeBoxTitle,
+  resumeBoxDescription,
+  isGuest = false,
+}) {
+  const router = useRouter();
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
+  function requireAuth(action) {
+    if (isGuest) {
+      setPendingAction(() => action);
+      setLoginModalOpen(true);
+      return;
+    }
+    action();
+  }
+
+  function handleLoginSuccess() {
+    setLoginModalOpen(false);
+    router.refresh();
+    pendingAction?.();
+    setPendingAction(null);
+  }
+
   const { resume, loading, uploading, removing, fileInputRef, handleFileSelected, handleRemove } =
-    useResumeManager();
+    useResumeManager({ isGuest, onRequireAuth: requireAuth });
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -64,6 +97,15 @@ export default function ResourcesGridSection({ categories, resumeBoxTitle, resum
           </div>
         </div>
       )}
+
+      <LoginModal
+        open={loginModalOpen}
+        onClose={() => {
+          setLoginModalOpen(false);
+          setPendingAction(null);
+        }}
+        onSuccess={handleLoginSuccess}
+      />
     </>
   );
 }

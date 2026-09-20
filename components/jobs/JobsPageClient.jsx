@@ -8,6 +8,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { JobCardSkeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/ToastProvider';
 import BlocklistManager from '@/components/jobs/BlocklistManager';
+import LoginModal from '@/components/auth/LoginModal';
 import { trustBadgeLabel } from '@/lib/mockData';
 
 const PAGE_SIZE = 20;
@@ -28,7 +29,7 @@ const FRESH_WINDOW_MS = 24 * 3_600_000; // Step 32 — see the "newest" sort com
 // than before on Suspicious's side.
 const TIER_BOOST_RANK = { 'Highly Trusted': 0, Trusted: 1, Unverified: 2 };
 
-export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
+export default function JobsPageClient({ jobType = 'Job', isAdmin = false, isGuest = false }) {
   const noun = jobType === 'Internship' ? 'internship' : 'job';
   const [allJobs, setAllJobs] = useState([]);
   const [blockedCompanies, setBlockedCompanies] = useState([]);
@@ -60,6 +61,36 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   // engine, not a second matching system.
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Update 77 — guest-mode login gate. `pendingAction` holds the raw
+  // (not guest-checked — see requireAuth below) function a guest was
+  // trying to run when LoginModal opened, so a successful login can
+  // just call it directly rather than asking the guest to redo
+  // whatever they clicked.
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
+  function requireAuth(action) {
+    if (isGuest) {
+      setPendingAction(() => action);
+      setLoginModalOpen(true);
+      return;
+    }
+    action();
+  }
+
+  function handleLoginSuccess() {
+    setLoginModalOpen(false);
+    // Updates this page's isGuest prop for the NEXT action —
+    // deliberately not awaited, since the pending action itself
+    // doesn't depend on that stale prop at all (it's the raw action,
+    // not the guest-checked wrapper), so there's no reason to make
+    // the guest wait for it before their click actually goes through.
+    router.refresh();
+    pendingAction?.();
+    setPendingAction(null);
+  }
+
   const [resumeMatchActive, setResumeMatchActive] = useState(false);
   const [resumeMatchUrls, setResumeMatchUrls] = useState(null);
   const [resumeMatchIsFallback, setResumeMatchIsFallback] = useState(false);
@@ -120,14 +151,11 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
       // Blocklist, saved jobs, and applications are all owned by a real
       // Supabase Auth user — an admin session has no rows in any of
       // these tables (same reasoning as Dashboard/Applications/
-      // Interviews since Step 23), so those fetches were never going
-      // to succeed. Step 23 flagged this as a known rough edge
-      // ("Couldn't load your applications..." is misleading when it
-      // was never going to load in the first place) and deferred the
-      // fix to whenever this file got touched for the remove-a-job
-      // feature — that's now, so it's fixed here instead of carried
-      // forward again.
-      if (isAdmin) {
+      // Interviews since Step 23), and neither does a guest (no
+      // account at all yet). Skipping these for both avoids the same
+      // misleading "couldn't load" toasts a guest never should have
+      // seen just for browsing without an account (Update 77).
+      if (isAdmin || isGuest) {
         setLoading(false);
         return;
       }
@@ -183,19 +211,21 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
   );
 
   async function handleBlock(companyName) {
-    try {
-      const res = await fetch('/api/blocklist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company_name: companyName }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to block');
-      setBlockedCompanies((prev) => [...prev, data.blocked_company]);
-      addToast(`Blocked ${companyName}`);
-    } catch (e) {
-      addToast(e.message, 'warning');
-    }
+    requireAuth(async () => {
+      try {
+        const res = await fetch('/api/blocklist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company_name: companyName }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to block');
+        setBlockedCompanies((prev) => [...prev, data.blocked_company]);
+        addToast(`Blocked ${companyName}`);
+      } catch (e) {
+        addToast(e.message, 'warning');
+      }
+    });
   }
 
   async function handleUnblock(id) {
@@ -585,6 +615,8 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
               job={job}
               onBlock={isAdmin ? undefined : handleBlock}
               isAdmin={isAdmin}
+              isGuest={isGuest}
+              onRequireAuth={requireAuth}
               onAdminRemove={handleAdminRemove}
               initialSaved={Boolean(savedByUrl[job.apply_url])}
               initialSavedJobId={savedByUrl[job.apply_url] || null}
@@ -607,6 +639,15 @@ export default function JobsPageClient({ jobType = 'Job', isAdmin = false }) {
           </button>
         </div>
       )}
+
+      <LoginModal
+        open={loginModalOpen}
+        onClose={() => {
+          setLoginModalOpen(false);
+          setPendingAction(null);
+        }}
+        onSuccess={handleLoginSuccess}
+      />
     </>
   );
 }

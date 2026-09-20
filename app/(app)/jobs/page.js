@@ -14,10 +14,13 @@ export default async function JobsPage() {
   // those tables.
   const viewer = await getViewer();
   const isAdmin = viewer.kind === 'admin';
+  // Update 77 — Jobs is now reachable without an account. See
+  // middleware.js and JobsPageClient.jsx for the guest-browsing story.
+  const isGuest = viewer.kind === null;
 
   return (
     <AppShell title="Jobs" subtitle="Listings from the last 4 days, refreshed every 6 hours" icon={Briefcase}>
-      <JobsPageClient jobType="Job" isAdmin={isAdmin} />
+      <JobsPageClient jobType="Job" isAdmin={isAdmin} isGuest={isGuest} />
     </AppShell>
   );
 }

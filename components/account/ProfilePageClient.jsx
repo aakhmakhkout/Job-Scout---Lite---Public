@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import RecoveryKeyDisplay from './RecoveryKeyDisplay';
 import DeleteAccountModal from './DeleteAccountModal';
 import InactivityNotice from './InactivityNotice';
@@ -9,12 +12,28 @@ import ResumeUploadCard from './ResumeUploadCard';
 import { useToast } from '@/components/ui/ToastProvider';
 
 export default function ProfilePageClient({ userEmail, daysInactive }) {
+  const router = useRouter();
   const [recoveryKey, setRecoveryKey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const { addToast } = useToast();
+
+  // Update 76 — this page was previously only reachable from the
+  // desktop Sidebar's UserMenu dropdown, which already had its own
+  // "Log out" button, so this page never needed one of its own.
+  // MobileNav now links here directly, and nothing else on mobile can
+  // log a regular user out — so this page needs to carry its own
+  // logout control rather than assume UserMenu is always nearby.
+  async function handleLogout() {
+    setLoggingOut(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -54,8 +73,21 @@ export default function ProfilePageClient({ userEmail, daysInactive }) {
   return (
     <div className="max-w-lg space-y-6">
       <div className="rounded-card border border-ink/10 bg-white p-5 dark:border-white/10 dark:bg-slate-800">
-        <h2 className="text-sm font-semibold">Account</h2>
-        <p className="mt-2 text-sm text-ink-soft dark:text-slate-300">{userEmail}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">Account</h2>
+            <p className="mt-2 text-sm text-ink-soft dark:text-slate-300">{userEmail}</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex shrink-0 items-center gap-1.5 rounded-md border border-ink/15 px-3 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/5 disabled:opacity-60 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/5"
+          >
+            <LogOut className="h-3.5 w-3.5" strokeWidth={2} />
+            {loggingOut ? 'Logging out…' : 'Log out'}
+          </button>
+        </div>
       </div>
 
       <InactivityNotice daysInactive={daysInactive} />

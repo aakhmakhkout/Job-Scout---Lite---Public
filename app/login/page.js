@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthShell from '@/components/auth/AuthShell';
 import AuthInput from '@/components/auth/AuthInput';
+import { loginWithPassword } from '@/lib/authLogin';
 
 export default function LoginPage() {
   return (
@@ -27,28 +28,15 @@ function LoginForm() {
     setError('');
     setLoading(true);
 
-    // Step 13: goes through /api/auth/login now instead of calling
-    // supabase.auth.signInWithPassword() directly from the browser —
-    // needed so failed attempts can actually be rate-limited server-side
-    // (max 5 tries before a 15-minute lock). See lib/rateLimit.js.
-    let res;
-    try {
-      res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-    } catch {
-      setLoading(false);
-      setError('Could not reach the server. Try again.');
-      return;
-    }
-
+    // Update 77 — now goes through lib/authLogin.js's shared helper
+    // instead of its own inline fetch, so this and the new LoginModal
+    // (the guest-mode popup) can't quietly drift apart. Same endpoint,
+    // same behavior as before this extraction.
+    const result = await loginWithPassword(email, password);
     setLoading(false);
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || 'Login failed');
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
 

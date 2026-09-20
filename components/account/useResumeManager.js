@@ -9,15 +9,25 @@ import { useToast } from '@/components/ui/ToastProvider';
 // one upload/fetch/remove implementation instead of two copies that
 // could quietly drift apart. Behavior is unchanged from before this
 // extraction — same endpoints, same toasts, same error handling.
-export function useResumeManager() {
+//
+// Update 77 — `isGuest`/`onRequireAuth` are new, optional params.
+// Only the Dashboard usage (ResourcesGridSection) ever passes them —
+// Profile stays fully login-gated by middleware, so ResumeUploadCard
+// never renders for a guest in the first place and doesn't need to
+// pass either. When isGuest is true: skip the mount-time GET (a
+// guest has no resume to fetch, and the request would just 401 into
+// a misleading "couldn't load your resume status" toast), and gate
+// the actual upload behind onRequireAuth instead of attempting it.
+export function useResumeManager({ isGuest = false, onRequireAuth } = {}) {
   const [resume, setResume] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isGuest);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const fileInputRef = useRef(null);
   const { addToast } = useToast();
 
   useEffect(() => {
+    if (isGuest) return;
     let cancelled = false;
     fetch('/api/resume')
       .then((res) => res.json())
@@ -41,6 +51,14 @@ export function useResumeManager() {
     e.target.value = ''; // allow re-selecting the same file later
     if (!file) return;
 
+    if (isGuest) {
+      onRequireAuth?.(() => reallyUpload(file));
+      return;
+    }
+    await reallyUpload(file);
+  }
+
+  async function reallyUpload(file) {
     setUploading(true);
     try {
       const formData = new FormData();

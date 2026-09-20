@@ -25,6 +25,12 @@ function formatSyncTime(iso) {
 export default async function DashboardPage() {
   const viewer = await getViewer();
   const isAdmin = viewer.kind === 'admin';
+  // Update 77 — Dashboard is now reachable without an account (see
+  // middleware.js). getViewer() already had a `{ kind: null }` guest
+  // state built in; it just never got exercised before, since
+  // middleware always redirected anonymous visitors before this page
+  // ever ran.
+  const isGuest = viewer.kind === null;
 
   // Update 46: which resource categories even exist is admin-managed
   // now (see lib/resourceCategories.js), so this has to be fetched
@@ -38,20 +44,21 @@ export default async function DashboardPage() {
   // Applied/Interview counts come from the `applications` table, which
   // only has rows for real Supabase Auth users — an admin session has
   // no such rows (and shouldn't; admins aren't tracked as job-seekers
-  // here). Skipping these two queries entirely for admin, rather than
-  // running them with a null user id, avoids both a crash and a
-  // misleading "0" that looks like a real empty state.
+  // here), and neither does a guest (no account at all yet). Skipping
+  // these two queries entirely for either, rather than running them
+  // with a null user id, avoids both a crash and a misleading "0"
+  // that looks like a real empty state.
   const [cacheResult, appliedResult, interviewResult, widgetsResult, resourceItemsResult] =
     await Promise.allSettled([
       getJobsCache(),
-      isAdmin
+      isAdmin || isGuest
         ? Promise.resolve({ count: null })
         : viewer.supabase
             .from('applications')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', viewer.user.id)
             .eq('status', 'Applied'),
-      isAdmin
+      isAdmin || isGuest
         ? Promise.resolve({ count: null })
         : viewer.supabase
             .from('applications')
@@ -81,12 +88,12 @@ export default async function DashboardPage() {
   const resourceItemsByCategory =
     resourceItemsResult.status === 'fulfilled' ? resourceItemsResult.value : {};
 
-  // Real failures (query rejected) vs. intentionally-skipped-for-admin
-  // both come out as `null` above, but only the former is worth
-  // warning about — an admin seeing "couldn't load stats, try
-  // refreshing" for something that was never going to load would be a
-  // confusing, inaccurate message.
-  const statsLoadFailed = !isAdmin && (appliedCount === null || interviewCount === null);
+  // Real failures (query rejected) vs. intentionally-skipped-for-
+  // admin-or-guest both come out as `null` above, but only the former
+  // is worth warning about — a guest or admin seeing "couldn't load
+  // stats, try refreshing" for something that was never going to load
+  // would be a confusing, inaccurate message.
+  const statsLoadFailed = !isAdmin && !isGuest && (appliedCount === null || interviewCount === null);
 
   const jobs = cache.jobs || [];
   const newJobsToday = jobs.filter((j) => {
@@ -156,7 +163,7 @@ export default async function DashboardPage() {
             <StatCard
               label="Applied"
               value={isAdmin ? '—' : appliedCount ?? '—'}
-              hint={isAdmin ? 'Not tracked for admin' : undefined}
+              hint={isAdmin ? 'Not tracked for admin' : isGuest ? 'Log in to track' : undefined}
               icon={Send}
               accent="brand"
             />
@@ -165,7 +172,7 @@ export default async function DashboardPage() {
             <StatCard
               label="Upcoming interviews"
               value={isAdmin ? '—' : interviewCount ?? '—'}
-              hint={isAdmin ? 'Not tracked for admin' : undefined}
+              hint={isAdmin ? 'Not tracked for admin' : isGuest ? 'Log in to track' : undefined}
               icon={CalendarClock}
               accent="rust"
             />
@@ -217,6 +224,7 @@ export default async function DashboardPage() {
               card. */}
           <div className="mt-3">
             <ResourcesGridSection
+              isGuest={isGuest}
               categories={visibleResourceCategories.map((category) => {
                 const override = widgets[`resource_${category.key}`] || {};
                 return {
